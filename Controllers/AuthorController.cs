@@ -8,13 +8,13 @@ namespace BookStorage.Controllers
 {
 
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class AuthorController : ControllerBase
     {
-        //private readonly IMockAuthorData _authorData;
-        private static readonly List<Author> _authors = new List<Author>
+        public static readonly List<Author> _authors = new List<Author>
         {
-            new Author {
+            new Author 
+            {
                 Id = Guid.NewGuid(),
                 FirstName = "Jack",
                 LastName = "London",
