@@ -1,4 +1,5 @@
-﻿using BookStorage.Models;
+﻿using BookStorage.DTO;
+using BookStorage.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.Controllers
@@ -7,6 +8,7 @@ namespace BookStorage.Controllers
     [Route("api/[controller]")]  
     public class BookController : ControllerBase
     {
+        private static readonly List<Author> _authors = AuthorController._authors;
         private static readonly List<Book> _books = new List<Book>
         {
             new Book
@@ -31,16 +33,32 @@ namespace BookStorage.Controllers
             }
         };
 
+        private string GetAuthorFullName(Guid authorId)
+        {
+            var author = _authors.FirstOrDefault(a => a.Id == authorId);
+            return author == null ? "Unknown" : $"{author.FirstName} {author.LastName}";
+        }
+
         /// <summary>
         /// Retrieves all books available in the system
         /// </summary>
         /// <returns>A list of books</returns>
         /// <response code="200">Returns the list of books.</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<Book>), 200)]
-        public ActionResult<IEnumerable<Book>> GetAll()
+        [ProducesResponseType(typeof(IEnumerable<BookDto>), 200)]
+        public ActionResult<IEnumerable<BookDto>> GetAll()
         {
-            return Ok(_books);
+            var booksDto = _books.Select(a => new BookDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Genre = a.Genre,
+                Price = a.Price,
+                PublishDate = a.PublishDate,
+                AuthorId = a.AuthrID,
+                AuthorFullName = GetAuthorFullName(a.AuthrID)
+            });
+            return Ok(booksDto);
         }
 
 
@@ -52,16 +70,26 @@ namespace BookStorage.Controllers
         /// <response code="200">Returns the book</response>
         /// <response code="404">If the book is not found</response>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(Book), 200)]
+        [ProducesResponseType(typeof(BookDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<Book> GetById([FromRoute] Guid id)
+        public ActionResult<BookDto> GetById([FromRoute] Guid id)
         {
             var book = _books.FirstOrDefault(a => a.Id == id);
             if (book == null)
             {
                 return NotFound();
             }
-            return Ok(book);
+            var bookDto = new BookDto
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Genre = book.Genre,
+                Price = book.Price,
+                PublishDate = book.PublishDate,
+                AuthorId = book.AuthrID,
+                AuthorFullName = GetAuthorFullName(book.AuthrID)
+            };
+            return Ok(bookDto);
         }
 
         /// <summary>
@@ -77,19 +105,31 @@ namespace BookStorage.Controllers
         ///        "Price" : "150",
         ///     }
         /// </remarks>
-        /// <param name="book">The book to create</param>
+        /// <param name="bookDto">The book to create</param>
         /// <returns>The newly created book</returns>
         /// <response code="201">Returns the newly created book</response>
         /// <response code="400">If the input model is invalid</response>
         [HttpPost]
-        [ProducesResponseType(typeof(Book), 201)]
+        [ProducesResponseType(typeof(CreateBookDto), 201)]
         [ProducesResponseType(400)]
-        public ActionResult<Book> Create([FromBody] Book book)
+        public ActionResult<CreateBookDto> Create([FromBody] CreateBookDto bookDto)
         {
+            var author = _authors.FirstOrDefault(a => a.Id == bookDto.AuthorId);
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
+            var book = new Book
+            {
+                Id = Guid.NewGuid(),
+                Title = bookDto.Title,
+                Genre = bookDto.Genre,
+                Price = bookDto.Price,
+                PublishDate = bookDto.PublishDate,
+                AuthrID = bookDto.AuthorId,
+                Author = author
+            };
 
             _books.Add(book);
             return StatusCode(201, book);
@@ -99,25 +139,30 @@ namespace BookStorage.Controllers
         /// Updates an existing book by their unique identifier
         /// </summary>
         /// <param name="id">The unique identifier of the book to update</param>
-        /// <param name="book">The updated book data</param>
+        /// <param name="bookDto">The updated book data</param>
         /// <returns>The updated book</returns>
         /// <response code="200">Returns the updated book</response>
         /// <response code="404">If the book with the specified ID is not found</response>
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(Book), 200)]
+        [ProducesResponseType(typeof(UpdateBookDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<Book> Update([FromRoute] Guid id, [FromBody] Book book)
+        public ActionResult<UpdateBookDto> Update([FromRoute] Guid id, [FromBody] UpdateBookDto bookDto)
         {
             var existingBook = _books.FirstOrDefault(x => x.Id == id);
             if (existingBook == null)
             {
                 return NotFound();
             }
-            existingBook.Title = book.Title;
-            existingBook.PublishDate = book.PublishDate;
-            existingBook.Price = book.Price;
-            existingBook.Author = book.Author;
-            return Ok(book);
+            var author = _authors.FirstOrDefault(a => a.Id == bookDto.AuthorId);
+
+            existingBook.Title = bookDto.Title;
+            existingBook.Genre = bookDto.Genre;
+            existingBook.Price = bookDto.Price;
+            existingBook.PublishDate = bookDto.PublishDate;
+            existingBook.AuthrID = bookDto.AuthorId;
+            existingBook.Author = author;
+
+            return Ok(existingBook);
         }
 
         /// <summary>

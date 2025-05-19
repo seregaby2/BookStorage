@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography.X509Certificates;
 using static System.Reflection.Metadata.BlobBuilder;
 using System.Xml.Linq;
+using BookStorage.DTO;
 
 namespace BookStorage.Controllers
 {
@@ -37,10 +38,17 @@ namespace BookStorage.Controllers
         /// <returns>A list of authors</returns>
         /// <response code="200">Returns the list of authors.</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<Author>), 200)]
-        public ActionResult<IEnumerable<Author>> GetAll()
+        [ProducesResponseType(typeof(IEnumerable<AuthorDto>), 200)]
+        public ActionResult<IEnumerable<AuthorDto>> GetAll()
         {
-            return Ok(_authors);
+            var authorsDto = _authors.Select(a => new AuthorDto
+            {
+                Id = a.Id,
+                FirstName = a.FirstName,
+                LastName = a.LastName,
+                BirthDate = a.BirthDate
+            });
+            return Ok(authorsDto);
         }
 
         /// <summary>
@@ -51,16 +59,24 @@ namespace BookStorage.Controllers
         /// <response code="200">Returns the author</response>
         /// <response code="404">If the author is not found</response>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(Author), 200)]
+        [ProducesResponseType(typeof(AuthorDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<Author> GetById([FromRoute] Guid id)
+        public ActionResult<AuthorDto> GetById([FromRoute] Guid id)
         {
             var author = _authors.FirstOrDefault(a => a.Id == id);
             if (author == null)
             {
                 return NotFound();
             }
-            return Ok(author);
+            var authorDto = new AuthorDto
+            {
+                Id = author.Id,
+                FirstName = author.FirstName,
+                LastName = author.LastName,
+                BirthDate = author.BirthDate
+            };
+
+            return Ok(authorDto);
         }
 
         /// <summary>
@@ -75,19 +91,27 @@ namespace BookStorage.Controllers
         ///         "lastName": "Tolstoy",
         ///     }
         /// </remarks>
-        /// <param name="author">The author to create</param>
+        /// <param name="authorDto">The author to create</param>
         /// <returns>The newly created author</returns>
         /// <response code="201">Returns the newly created author</response>
         /// <response code="400">If the input model is invalid</response>
         [HttpPost]
-        [ProducesResponseType(typeof(Author), 201)]
+        [ProducesResponseType(typeof(CreateAuthorDto), 201)]
         [ProducesResponseType(400)]
-        public ActionResult<Author> Create([FromBody] Author author)
+        public ActionResult<CreateAuthorDto> Create([FromBody] CreateAuthorDto authorDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
+            var author = new Author
+            {
+                Id = Guid.NewGuid(),
+                FirstName = authorDto.FirstName,
+                LastName = authorDto.LastName,
+                BirthDate = authorDto.BirthDate,
+            };
 
             _authors.Add(author);
             return StatusCode(201, author);
@@ -97,23 +121,23 @@ namespace BookStorage.Controllers
         /// Updates an existing author by their unique identifier
         /// </summary>
         /// <param name="id">The unique identifier of the author to update</param>
-        /// <param name="author">The updated author data</param>
+        /// <param name="authorDto">The updated author data</param>
         /// <returns>The updated author</returns>
         /// <response code="200">Returns the updated author</response>
         /// <response code="404">If the author with the specified ID is not found</response>
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(Author), 200)]
+        [ProducesResponseType(typeof(UpdateAuthorDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<Author> Update([FromRoute] Guid id, [FromBody] Author author)
+        public ActionResult<UpdateAuthorDto> Update([FromRoute] Guid id, [FromBody] UpdateAuthorDto authorDto)
         {
             var existingAuthor = _authors.FirstOrDefault(a => a.Id == id);
             if (existingAuthor == null)
             {
                 return NotFound();
             }
-            existingAuthor.BirthDate = author.BirthDate;
-            existingAuthor.FirstName = author.FirstName;
-            existingAuthor.LastName = author.LastName;
+            existingAuthor.BirthDate = authorDto.BirthDate;
+            existingAuthor.FirstName = authorDto.FirstName;
+            existingAuthor.LastName = authorDto.LastName;
             return Ok(existingAuthor);
         }
 
