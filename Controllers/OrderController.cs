@@ -1,4 +1,5 @@
-﻿using BookStorage.Models;
+﻿using BookStorage.DTOs.Order;
+using BookStorage.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.Controllers
@@ -35,10 +36,18 @@ namespace BookStorage.Controllers
         /// <returns>A list of orders</returns>
         /// <response code="200">Returns the list of orders.</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<Order>), 200)]
-        public ActionResult<IEnumerable<Order>> GetAll()
+        [ProducesResponseType(typeof(IEnumerable<OrderViewDto>), 200)]
+        public ActionResult<IEnumerable<OrderViewDto>> GetAll()
         {
-            return Ok(_orders);
+            var ordersDto = _orders.Select(a => new OrderViewDto
+            {
+                Id =a.Id,
+                TotalAmount = a.TotalAmount,
+                OrderDate = a.OrderDate,
+                CustomerId = a.CustomerId,
+            });
+            
+            return Ok(ordersDto);
         }
 
         /// <summary>
@@ -49,16 +58,25 @@ namespace BookStorage.Controllers
         /// <response code="200">Returns the order</response>
         /// <response code="404">If the author is not found</response>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(Order), 200)]
+        [ProducesResponseType(typeof(OrderViewDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<Order> GetById([FromRoute] Guid id)
+        public ActionResult<OrderViewDto> GetById([FromRoute] Guid id)
         {
             var order = _orders.FirstOrDefault(a => a.Id == id);
             if (order == null)
             {
                 return NotFound();
             }
-            return Ok(order);
+
+            var orderDto = new OrderViewDto
+            {
+                Id = order.Id,
+                TotalAmount = order.TotalAmount,
+                OrderDate = order.OrderDate,
+                CustomerId = order.CustomerId,
+            };
+
+            return Ok(orderDto);
         }
 
         /// <summary>
@@ -77,17 +95,34 @@ namespace BookStorage.Controllers
         /// <response code="201">Returns the newly created order</response>
         /// <response code="400">If the input model is invalid</response>
         [HttpPost]
-        [ProducesResponseType(typeof(Order), 201)]
+        [ProducesResponseType(typeof(OrderViewDto), 201)]
         [ProducesResponseType(400)]
-        public ActionResult<Order> Create([FromBody] Order order)
+        public ActionResult<OrderViewDto> Create([FromBody] CreateOrderDto orderDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
+            var order = new Order
+            {
+                Id = Guid.NewGuid(),
+                TotalAmount = orderDto.TotalAmount,
+                OrderDate = orderDto.OrderDate,
+                CustomerId = orderDto.CustomerId,
+            };
+
             _orders.Add(order);
-            return StatusCode(201, order);
+
+            var createdOrder = new OrderViewDto
+            {
+                Id = order.Id,
+                TotalAmount = order.TotalAmount,
+                OrderDate = order.OrderDate,
+                CustomerId = order.CustomerId,
+            };
+
+            return StatusCode(201, createdOrder);
         }
 
         /// <summary>
@@ -99,18 +134,28 @@ namespace BookStorage.Controllers
         /// <response code="200">Returns the updated order</response>
         /// <response code="404">If the order with the specified ID is not found</response>
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(Order), 200)]
+        [ProducesResponseType(typeof(OrderViewDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<Order> Update([FromRoute] Guid id, [FromBody] Order order)
+        public ActionResult<OrderViewDto> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto order)
         {
             var existingOrder = _orders.FirstOrDefault(x => x.Id == id);
+
             if (existingOrder == null)
             {
                 return NotFound();
             }
+
             existingOrder.OrderDate = order.OrderDate;
             existingOrder.TotalAmount = order.TotalAmount;
-            return Ok(existingOrder);
+
+            var updatedDto = new OrderViewDto
+            {
+                Id = existingOrder.Id,
+                TotalAmount = existingOrder.TotalAmount,
+                OrderDate = existingOrder.OrderDate,
+            };
+            
+            return Ok(updatedDto);
         }
 
         /// <summary>
@@ -129,7 +174,9 @@ namespace BookStorage.Controllers
             {
                 return NotFound();
             }
+
             _orders.Remove(order);
+            
             return NoContent();
         }
     }

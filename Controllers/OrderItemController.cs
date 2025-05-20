@@ -1,6 +1,6 @@
-﻿using BookStorage.Models;
+﻿using BookStorage.DTOs.OrderItem;
+using BookStorage.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace BookStorage.Controllers
 {
@@ -34,9 +34,16 @@ namespace BookStorage.Controllers
         /// <returns>A list of orderItems</returns>
         /// <response code="200">Returns the list of orderItems.</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<OrderItem>), 200)]
+        [ProducesResponseType(typeof(IEnumerable<OrderItemViewDto>), 200)]
         public ActionResult<IEnumerable<OrderItem>> GetAll()
         {
+            var orderItemsDto = _orderItems.Select(a => new OrderItemViewDto
+            {
+                Id = a.Id,
+                OrderId = a.OrderId,
+                BookId = a.BookId,
+            });
+
             return Ok(_orderItems);
         }
 
@@ -48,59 +55,93 @@ namespace BookStorage.Controllers
         /// <response code="200">Returns the orderItem</response>
         /// <response code="404">If the orderItem is not found</response>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(OrderItem), 200)]
+        [ProducesResponseType(typeof(OrderItemViewDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<OrderItem> GetById([FromRoute] Guid id)
+        public ActionResult<OrderItemViewDto> GetById([FromRoute] Guid id)
         {
             var orderItem = _orderItems.FirstOrDefault(x => x.Id == id);
             if (orderItem == null)
             {
                 return NotFound();
             }
-            return Ok(orderItem);
+
+            var orderItemDto = new OrderItemViewDto
+            {
+                Id = orderItem.Id,
+                OrderId = orderItem.OrderId,
+                BookId = orderItem.BookId,
+            };
+
+            return Ok(orderItemDto);
         }
 
         /// <summary>
         /// Creates a new orderItem
         /// </summary>
-        /// <param name="orderItem">The orderItem to create</param>
+        /// <param name="orderItemDto">The orderItem to create</param>
         /// <returns>The newly created orderItem</returns>
         /// <response code="201">Returns the newly created orderItem</response>
         /// <response code="400">If the input model is invalid</response>
         [HttpPost]
-        [ProducesResponseType(typeof(OrderItem), 201)]
+        [ProducesResponseType(typeof(OrderItemViewDto), 201)]
         [ProducesResponseType(400)]
-        public ActionResult<OrderItem> Create([FromBody] OrderItem orderItem)
+        public ActionResult<OrderItemViewDto> Create([FromBody] CreateOrderItemDto orderItemDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
+            var orderItem = new OrderItem
+            {
+                Id = Guid.NewGuid(),
+                OrderId = orderItemDto.OrderId,
+                BookId = orderItemDto.BookId,
+                Order = new Order(),
+                Book = new Book()
+            };
+
             _orderItems.Add(orderItem);
-            return StatusCode(201, orderItem);
+
+            var createdOrderItem = new OrderItemViewDto
+            {
+                Id = orderItem.Id,
+                OrderId = orderItemDto.OrderId,
+                BookId = orderItemDto.BookId,
+            };
+
+            return StatusCode(201, createdOrderItem);
         }
 
         /// <summary>
         /// Updates an existing orderItem by their unique identifier
         /// </summary>
         /// <param name="id">The unique identifier of the orderItem to update</param>
-        /// <param name="orderItem">The updated orderItem data</param>
+        /// <param name="orderItemDto">The updated orderItem data</param>
         /// <returns>The updated orderItem</returns>
         /// <response code="200">Returns the updated orderItem</response>
         /// <response code="404">If the orderItem with the specified ID is not found</response>
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(OrderItem), 200)]
+        [ProducesResponseType(typeof(OrderItemViewDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<OrderItem> Update([FromRoute] Guid id, [FromBody] OrderItem orderItem)
+        public ActionResult<OrderItemViewDto> Update([FromRoute] Guid id, [FromBody] UpdateOrderItemDto orderItemDto)
         {
             var existingOrderItem = _orderItems.FirstOrDefault(x => x.Id == id);
             if (existingOrderItem == null)
             {
                 return NotFound();
             }
-            existingOrderItem.Id = orderItem.Id;
-            return Ok(_orderItems);
+
+            existingOrderItem.OrderId = orderItemDto.OrderId;
+            existingOrderItem.BookId = orderItemDto.BookId;
+
+            var updatedOrderItem = new OrderItemViewDto
+            {
+                Id = existingOrderItem.OrderId,
+                OrderId = existingOrderItem.OrderId,
+            };
+
+            return Ok(updatedOrderItem);
         }
 
         /// <summary>
@@ -119,7 +160,9 @@ namespace BookStorage.Controllers
             {
                 return NotFound();
             }
+
             _orderItems.Remove(orderItem);
+
             return NoContent();
         }
     }

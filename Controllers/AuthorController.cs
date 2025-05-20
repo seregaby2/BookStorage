@@ -1,9 +1,6 @@
 ﻿using BookStorage.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Cryptography.X509Certificates;
-using static System.Reflection.Metadata.BlobBuilder;
-using System.Xml.Linq;
-using BookStorage.DTO;
+using BookStorage.DTOs.Author;
 
 namespace BookStorage.Controllers
 {
@@ -38,16 +35,17 @@ namespace BookStorage.Controllers
         /// <returns>A list of authors</returns>
         /// <response code="200">Returns the list of authors.</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<AuthorDto>), 200)]
-        public ActionResult<IEnumerable<AuthorDto>> GetAll()
+        [ProducesResponseType(typeof(IEnumerable<AuthorViewDto>), 200)]
+        public ActionResult<IEnumerable<AuthorViewDto>> GetAll()
         {
-            var authorsDto = _authors.Select(a => new AuthorDto
+            var authorsDto = _authors.Select(a => new AuthorViewDto
             {
                 Id = a.Id,
                 FirstName = a.FirstName,
                 LastName = a.LastName,
                 BirthDate = a.BirthDate
             });
+
             return Ok(authorsDto);
         }
 
@@ -59,16 +57,17 @@ namespace BookStorage.Controllers
         /// <response code="200">Returns the author</response>
         /// <response code="404">If the author is not found</response>
         [HttpGet("{id}")]
-        [ProducesResponseType(typeof(AuthorDto), 200)]
+        [ProducesResponseType(typeof(AuthorViewDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<AuthorDto> GetById([FromRoute] Guid id)
+        public ActionResult<AuthorViewDto> GetById([FromRoute] Guid id)
         {
             var author = _authors.FirstOrDefault(a => a.Id == id);
             if (author == null)
             {
                 return NotFound();
             }
-            var authorDto = new AuthorDto
+
+            var authorDto = new AuthorViewDto
             {
                 Id = author.Id,
                 FirstName = author.FirstName,
@@ -96,9 +95,9 @@ namespace BookStorage.Controllers
         /// <response code="201">Returns the newly created author</response>
         /// <response code="400">If the input model is invalid</response>
         [HttpPost]
-        [ProducesResponseType(typeof(CreateAuthorDto), 201)]
+        [ProducesResponseType(typeof(AuthorViewDto), 201)]
         [ProducesResponseType(400)]
-        public ActionResult<CreateAuthorDto> Create([FromBody] CreateAuthorDto authorDto)
+        public ActionResult<AuthorViewDto> Create([FromBody] CreateAuthorDto authorDto)
         {
             if (!ModelState.IsValid)
             {
@@ -111,10 +110,20 @@ namespace BookStorage.Controllers
                 FirstName = authorDto.FirstName,
                 LastName = authorDto.LastName,
                 BirthDate = authorDto.BirthDate,
+                Books = new List<Book>()
             };
 
             _authors.Add(author);
-            return StatusCode(201, author);
+
+            var createdDto = new AuthorViewDto
+            {
+                Id = author.Id,
+                FirstName = author.FirstName,
+                LastName = author.LastName,
+                BirthDate = author.BirthDate
+            };
+
+            return StatusCode(201, createdDto);
         }
 
         /// <summary>
@@ -126,19 +135,29 @@ namespace BookStorage.Controllers
         /// <response code="200">Returns the updated author</response>
         /// <response code="404">If the author with the specified ID is not found</response>
         [HttpPut("{id}")]
-        [ProducesResponseType(typeof(UpdateAuthorDto), 200)]
+        [ProducesResponseType(typeof(AuthorViewDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<UpdateAuthorDto> Update([FromRoute] Guid id, [FromBody] UpdateAuthorDto authorDto)
+        public ActionResult<AuthorViewDto> Update([FromRoute] Guid id, [FromBody] UpdateAuthorDto authorDto)
         {
             var existingAuthor = _authors.FirstOrDefault(a => a.Id == id);
             if (existingAuthor == null)
             {
                 return NotFound();
             }
+
             existingAuthor.BirthDate = authorDto.BirthDate;
             existingAuthor.FirstName = authorDto.FirstName;
             existingAuthor.LastName = authorDto.LastName;
-            return Ok(existingAuthor);
+
+            var updatedDto = new AuthorViewDto
+            {
+                Id = existingAuthor.Id,
+                FirstName = existingAuthor.FirstName,
+                LastName = existingAuthor.LastName,
+                BirthDate = existingAuthor.BirthDate,
+            };
+
+            return Ok(updatedDto);
         }
 
         /// <summary>
@@ -157,7 +176,9 @@ namespace BookStorage.Controllers
             {
                 return NotFound();
             }
+
             _authors.Remove(authorToDelete);
+
             return NoContent();
         }
     }

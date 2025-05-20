@@ -11,7 +11,6 @@ namespace BookStorage.Models
 
         public Guid CustomerId { get; set; }
         public Customer Customer { get; set; }
-
         public List<OrderItem> OrderItems { get; set; }
     }
 }
