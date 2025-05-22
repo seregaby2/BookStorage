@@ -1,7 +1,12 @@
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'BookStorage')
+BEGIN
+    CREATE DATABASE [BookStorage];
+END
+GO
+
 USE [BooksStorage]
 GO
 
-/****** Object:  Table [dbo].[Books]    Script Date: 22/05/2025 2:38:30 pm ******/
 SET ANSI_NULLS ON
 GO
 
