@@ -1,4 +1,4 @@
-﻿namespace BookStorage.DTOs.Book
+﻿namespace BookStorage.WebApi.DTOs.Book
 {
     public class BookViewDto
     {

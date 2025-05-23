@@ -1,4 +1,4 @@
-﻿namespace BookStorage.DTOs.Author
+﻿namespace BookStorage.WebApi.DTOs.Author
 {
     public class CreateAuthorDto
     {

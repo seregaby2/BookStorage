@@ -1,4 +1,4 @@
-﻿namespace BookStorage.DTOs.OrderItem
+﻿namespace BookStorage.WebApi.DTOs.OrderItem
 {
     public class UpdateOrderItemDto
     {

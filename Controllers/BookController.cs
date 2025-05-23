@@ -1,13 +1,21 @@
-﻿using BookStorage.DTOs.Book;
-using BookStorage.Models;
+﻿using AutoMapper;
+using BookStorage.WebApi.DTOs.Book;
 using Microsoft.AspNetCore.Mvc;
+using BookStorage.Domain.Models;
 
-namespace BookStorage.Controllers
+namespace BookStorage.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]  
     public class BookController : ControllerBase
     {
+        private readonly IMapper _mapper;
+
+        public BookController(IMapper mapper)
+        {
+            _mapper = mapper;
+        }
+
         private static readonly List<Author> _authors = AuthorController._authors;
         private static readonly List<Book> _books = new List<Book>
         {
@@ -42,16 +50,7 @@ namespace BookStorage.Controllers
         [ProducesResponseType(typeof(IEnumerable<BookViewDto>), 200)]
         public ActionResult<IEnumerable<BookViewDto>> GetAll()
         {
-            var booksDto = _books.Select(a => new BookViewDto
-            {
-                Id = a.Id,
-                Title = a.Title,
-                Genre = a.Genre,
-                Price = a.Price,
-                PublishDate = a.PublishDate,
-                AuthorId = a.AuthrID,
-                AuthorFullName = GetAuthorFullName(a.AuthrID)
-            });
+            var booksDto = _mapper.Map<BookViewDto>(_books);
 
             return Ok(booksDto);
         }

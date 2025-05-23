@@ -1,8 +1,8 @@
-﻿using BookStorage.DTOs.Order;
-using BookStorage.Models;
+﻿using BookStorage.WebApi.DTOs.Order;
 using Microsoft.AspNetCore.Mvc;
+using BookStorage.Domain.Models;
 
-namespace BookStorage.Controllers
+namespace BookStorage.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

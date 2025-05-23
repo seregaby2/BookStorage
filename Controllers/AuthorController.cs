@@ -1,14 +1,21 @@
-﻿using BookStorage.Models;
-using Microsoft.AspNetCore.Mvc;
-using BookStorage.DTOs.Author;
+﻿using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
+using BookStorage.WebApi.DTOs.Author;
+using BookStorage.Domain.Models;
 
-namespace BookStorage.Controllers
+namespace BookStorage.WebApi.Controllers
 {
-
     [ApiController]
     [Route("api/[controller]")]
     public class AuthorController : ControllerBase
     {
+        private readonly IMapper _mapper;
+
+        public AuthorController(IMapper mapper)
+        {
+            _mapper = mapper;
+        }
+
         public static readonly List<Author> _authors = new List<Author>
         {
             new Author 
@@ -38,13 +45,7 @@ namespace BookStorage.Controllers
         [ProducesResponseType(typeof(IEnumerable<AuthorViewDto>), 200)]
         public ActionResult<IEnumerable<AuthorViewDto>> GetAll()
         {
-            var authorsDto = _authors.Select(a => new AuthorViewDto
-            {
-                Id = a.Id,
-                FirstName = a.FirstName,
-                LastName = a.LastName,
-                BirthDate = a.BirthDate
-            });
+            var authorsDto = _mapper.Map <List<AuthorViewDto>>(_authors);
 
             return Ok(authorsDto);
         }
@@ -67,14 +68,8 @@ namespace BookStorage.Controllers
                 return NotFound();
             }
 
-            var authorDto = new AuthorViewDto
-            {
-                Id = author.Id,
-                FirstName = author.FirstName,
-                LastName = author.LastName,
-                BirthDate = author.BirthDate
-            };
-
+            var authorDto = _mapper.Map<AuthorViewDto>(author);
+           
             return Ok(authorDto);
         }
 
@@ -104,24 +99,13 @@ namespace BookStorage.Controllers
                 return BadRequest(ModelState);
             }
 
-            var author = new Author
-            {
-                Id = Guid.NewGuid(),
-                FirstName = authorDto.FirstName,
-                LastName = authorDto.LastName,
-                BirthDate = authorDto.BirthDate,
-                Books = new List<Book>()
-            };
-
+            var author = _mapper.Map<Author> (authorDto);
+            author.Id = Guid.NewGuid();
+            author.Books = new List<Book>();
+            
             _authors.Add(author);
 
-            var createdDto = new AuthorViewDto
-            {
-                Id = author.Id,
-                FirstName = author.FirstName,
-                LastName = author.LastName,
-                BirthDate = author.BirthDate
-            };
+            var createdDto = _mapper.Map<AuthorViewDto>(author);
 
             return StatusCode(201, createdDto);
         }
@@ -145,17 +129,9 @@ namespace BookStorage.Controllers
                 return NotFound();
             }
 
-            existingAuthor.BirthDate = authorDto.BirthDate;
-            existingAuthor.FirstName = authorDto.FirstName;
-            existingAuthor.LastName = authorDto.LastName;
+            _mapper.Map(authorDto, existingAuthor);
 
-            var updatedDto = new AuthorViewDto
-            {
-                Id = existingAuthor.Id,
-                FirstName = existingAuthor.FirstName,
-                LastName = existingAuthor.LastName,
-                BirthDate = existingAuthor.BirthDate,
-            };
+            var updatedDto = _mapper.Map<AuthorViewDto>(existingAuthor);
 
             return Ok(updatedDto);
         }

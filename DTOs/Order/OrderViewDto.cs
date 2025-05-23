@@ -1,4 +1,4 @@
-﻿namespace BookStorage.DTOs.Order
+﻿namespace BookStorage.WebApi.DTOs.Order
 {
     public class OrderViewDto
     {
