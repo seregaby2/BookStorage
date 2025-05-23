@@ -19,7 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BookStorage.Application\BookStorage.Application.csproj" />
     <ProjectReference Include="..\BookStorage.Domain\BookStorage.Domain.csproj" />
+    <ProjectReference Include="..\BookStorage.Infrastructure\BookStorage.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
