@@ -1,6 +1,7 @@
 ﻿using BookStorage.WebApi.DTOs.Order;
 using Microsoft.AspNetCore.Mvc;
 using BookStorage.Domain.Models;
+using AutoMapper;
 
 namespace BookStorage.WebApi.Controllers
 {
@@ -8,6 +9,13 @@ namespace BookStorage.WebApi.Controllers
     [Route("api/[controller]")]
     public class OrderController : ControllerBase
     {
+
+        private readonly IMapper _mapper;
+        public OrderController(IMapper mapper)
+        {
+            _mapper = mapper;
+        }
+
         public static readonly List<Order> _orders = new List<Order>
         {
           new Order
@@ -39,13 +47,7 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<OrderViewDto>), 200)]
         public ActionResult<IEnumerable<OrderViewDto>> GetAll()
         {
-            var ordersDto = _orders.Select(a => new OrderViewDto
-            {
-                Id =a.Id,
-                TotalAmount = a.TotalAmount,
-                OrderDate = a.OrderDate,
-                CustomerId = a.CustomerId,
-            });
+            var ordersDto = _mapper.Map<List<OrderViewDto>>(_orders);
             
             return Ok(ordersDto);
         }
@@ -68,14 +70,7 @@ namespace BookStorage.WebApi.Controllers
                 return NotFound();
             }
 
-            var orderDto = new OrderViewDto
-            {
-                Id = order.Id,
-                TotalAmount = order.TotalAmount,
-                OrderDate = order.OrderDate,
-                CustomerId = order.CustomerId,
-            };
-
+            var orderDto = _mapper.Map<OrderViewDto>(order);
             return Ok(orderDto);
         }
 
@@ -90,7 +85,7 @@ namespace BookStorage.WebApi.Controllers
         ///         "TotalAmount"  : "500",
         ///     }
         /// </remarks>
-        /// <param name="order">The order to create</param>
+        /// <param name="orderDto">The order to create</param>
         /// <returns>The newly created order</returns>
         /// <response code="201">Returns the newly created order</response>
         /// <response code="400">If the input model is invalid</response>
@@ -104,23 +99,11 @@ namespace BookStorage.WebApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            var order = new Order
-            {
-                Id = Guid.NewGuid(),
-                TotalAmount = orderDto.TotalAmount,
-                OrderDate = orderDto.OrderDate,
-                CustomerId = orderDto.CustomerId,
-            };
+            var order = _mapper.Map<Order>(orderDto);
 
             _orders.Add(order);
 
-            var createdOrder = new OrderViewDto
-            {
-                Id = order.Id,
-                TotalAmount = order.TotalAmount,
-                OrderDate = order.OrderDate,
-                CustomerId = order.CustomerId,
-            };
+            var createdOrder = _mapper.Map<OrderViewDto>(order);
 
             return StatusCode(201, createdOrder);
         }
@@ -129,14 +112,14 @@ namespace BookStorage.WebApi.Controllers
         /// Updates an existing order by their unique identifier
         /// </summary>
         /// <param name="id">The unique identifier of the order to update</param>
-        /// <param name="order">The updated order data</param>
+        /// <param name="orderDto">The updated order data</param>
         /// <returns>The updated order</returns>
         /// <response code="200">Returns the updated order</response>
         /// <response code="404">If the order with the specified ID is not found</response>
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(OrderViewDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<OrderViewDto> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto order)
+        public ActionResult<OrderViewDto> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
         {
             var existingOrder = _orders.FirstOrDefault(x => x.Id == id);
 
@@ -145,15 +128,9 @@ namespace BookStorage.WebApi.Controllers
                 return NotFound();
             }
 
-            existingOrder.OrderDate = order.OrderDate;
-            existingOrder.TotalAmount = order.TotalAmount;
+            _mapper.Map(orderDto, existingOrder);
 
-            var updatedDto = new OrderViewDto
-            {
-                Id = existingOrder.Id,
-                TotalAmount = existingOrder.TotalAmount,
-                OrderDate = existingOrder.OrderDate,
-            };
+            var updatedDto = _mapper.Map<OrderViewDto>(existingOrder);
             
             return Ok(updatedDto);
         }

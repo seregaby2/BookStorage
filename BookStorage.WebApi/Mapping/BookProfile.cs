@@ -6,10 +6,11 @@ namespace BookStorage.WebApi.Mapping
 {
     public class BookProfile: Profile
     {
-        public BookProfile() {
+        public BookProfile() 
+        {
             CreateMap<Book, BookViewDto>();
-            CreateMap<CreateBookDto, BookViewDto>();
-            CreateMap<UpdateBookDto, BookViewDto>();
+            CreateMap<CreateBookDto, Book>();
+            CreateMap<UpdateBookDto, Book>();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using BookStorage.WebApi.DTOs.Customer;
 using Microsoft.AspNetCore.Mvc;
 using BookStorage.Domain.Models;
+using AutoMapper;
 
 namespace BookStorage.WebApi.Controllers
 {
@@ -8,6 +9,12 @@ namespace BookStorage.WebApi.Controllers
     [ApiController]
     public class CustomerController : ControllerBase
     {
+        private readonly IMapper _mapper;
+        public CustomerController(IMapper mapper)
+        {
+            _mapper = mapper;
+        }
+
         public static readonly List<Customer> _customers = new List<Customer>
         {
           new Customer
@@ -39,14 +46,8 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<CustomerViewDto>), 200)]
         public ActionResult<IEnumerable<CustomerViewDto>> GetAll()
         {
-            var customerDto = _customers.Select(a => new CustomerViewDto
-            {
-                Id = a.Id,
-                Email = a.Email,
-                Name = a.Name,
-                PhoneNumber = a.PhoneNumber,
-                PurchasehDate = a.PurchasehDate,
-            });
+            var customerDto = _mapper.Map<List<CustomerViewDto>>(_customers);
+
             return Ok(customerDto);
         }
 
@@ -68,15 +69,7 @@ namespace BookStorage.WebApi.Controllers
                 return NotFound();
             }
 
-            var customerDto = new CustomerViewDto
-            {
-                Id = customer.Id,
-                Email = customer.Email,
-                Name = customer.Name,
-                PhoneNumber = customer.PhoneNumber,
-                PurchasehDate = customer.PurchasehDate,
-            };
-
+            var customerDto = _mapper.Map<CustomerViewDto>(customer);
             return Ok(customerDto);
         }
 
@@ -107,26 +100,11 @@ namespace BookStorage.WebApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            var customer = new Customer
-            {
-                Id = Guid.NewGuid(),
-                Email = customerDto.Email,
-                Name = customerDto.Name,
-                PhoneNumber = customerDto.PhoneNumber,
-                PurchasehDate = customerDto.PurchasehDate,
-                Orders = new List<Order>()
-            };
+            var customer = _mapper.Map<Customer>(customerDto);
 
             _customers.Add(customer);
 
-            var createdDto = new CustomerViewDto
-            {
-                Id = Guid.NewGuid(),
-                Email = customer.Email,
-                Name = customer.Name,
-                PhoneNumber = customer.PhoneNumber,
-                PurchasehDate = customer.PurchasehDate,
-            };
+            var createdDto = _mapper.Map<CustomerViewDto>(customer);
 
             return StatusCode(201, createdDto); ;
         }
@@ -135,14 +113,14 @@ namespace BookStorage.WebApi.Controllers
         /// Updates an existing customer by their unique identifier
         /// </summary>
         /// <param name="id">The unique identifier of the customer to update</param>
-        /// <param name="customer">The updated customer data</param>
+        /// <param name="customerDto">The updated customer data</param>
         /// <returns>The updated customer</returns>
         /// <response code="200">Returns the updated customer</response>
         /// <response code="404">If the customer with the specified ID is not found</response>
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(CustomerViewDto), 200)]
         [ProducesResponseType(404)]
-        public ActionResult<CustomerViewDto> Update([FromRoute] Guid id, [FromBody] UpdateCustomerDto customer)
+        public ActionResult<CustomerViewDto> Update([FromRoute] Guid id, [FromBody] UpdateCustomerDto customerDto)
         {
             var existingCustomer = _customers.FirstOrDefault(x => x.Id == id);
             if (existingCustomer == null)
@@ -150,20 +128,9 @@ namespace BookStorage.WebApi.Controllers
                 return NotFound();
             }
 
-            existingCustomer.Name = customer.Name;
-            existingCustomer.PhoneNumber = customer.PhoneNumber;
-            existingCustomer.Email = customer.Email;
-            existingCustomer.PurchasehDate = customer.PurchasehDate;
+            _mapper.Map(customerDto, existingCustomer);
 
-            var updatedDto = new CustomerViewDto
-            {
-                Id = existingCustomer.Id,
-                Email = existingCustomer.Email,
-                Name = existingCustomer.Name,
-                PhoneNumber = existingCustomer.PhoneNumber,
-                PurchasehDate = existingCustomer.PurchasehDate,
-            };
-            
+            var updatedDto = _mapper.Map<CustomerViewDto>(existingCustomer);
             return Ok(existingCustomer);
         }
 

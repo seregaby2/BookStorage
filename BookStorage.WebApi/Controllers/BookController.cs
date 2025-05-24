@@ -50,7 +50,7 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<BookViewDto>), 200)]
         public ActionResult<IEnumerable<BookViewDto>> GetAll()
         {
-            var booksDto = _mapper.Map<BookViewDto>(_books);
+            var booksDto = _mapper.Map<List<BookViewDto>>(_books);
 
             return Ok(booksDto);
         }
@@ -73,16 +73,7 @@ namespace BookStorage.WebApi.Controllers
                 return NotFound();
             }
 
-            var bookDto = new BookViewDto
-            {
-                Id = book.Id,
-                Title = book.Title,
-                Genre = book.Genre,
-                Price = book.Price,
-                PublishDate = book.PublishDate,
-                AuthorId = book.AuthrID,
-                AuthorFullName = GetAuthorFullName(book.AuthrID)
-            };
+            var bookDto = _mapper.Map<BookViewDto>(book);
             
             return Ok(bookDto);
         }
@@ -120,29 +111,11 @@ namespace BookStorage.WebApi.Controllers
                 return BadRequest($"Author with ID {bookDto.AuthorId} was not found.");
             }
                 
-            var book = new Book
-            {
-                Id = Guid.NewGuid(),
-                Title = bookDto.Title,
-                Genre = bookDto.Genre,
-                Price = bookDto.Price,
-                PublishDate = bookDto.PublishDate,
-                AuthrID = bookDto.AuthorId,
-                Author = author
-            };
+            var book = _mapper.Map<Book>(bookDto);
 
             _books.Add(book);
 
-            var createdDto = new BookViewDto
-            {
-                Id = book.Id,
-                Title = book.Title,
-                Genre = book.Genre,
-                Price = book.Price,
-                PublishDate = book.PublishDate,
-                AuthorId = book.AuthrID,
-                AuthorFullName = $"{author.FirstName} {author.LastName}"
-            };
+            var createdDto = _mapper.Map<BookViewDto>(book);
 
             return StatusCode(201, createdDto);
         }
@@ -173,24 +146,9 @@ namespace BookStorage.WebApi.Controllers
                 return BadRequest($"Author with ID {bookDto.AuthorId} was not found.");
             }
 
-            existingBook.Title = bookDto.Title;
-            existingBook.Genre = bookDto.Genre;
-            existingBook.Price = bookDto.Price;
-            existingBook.PublishDate = bookDto.PublishDate;
-            existingBook.AuthrID = bookDto.AuthorId;
-            existingBook.Author = author;
+            _mapper.Map(bookDto, existingBook);
             
-            var UpdateDdto = new BookViewDto
-            {
-                Id = existingBook.Id,
-                Title = existingBook.Title,
-                Genre = existingBook.Genre,
-                Price = existingBook.Price,
-                PublishDate = existingBook.PublishDate,
-                AuthorId = existingBook.AuthrID,
-                AuthorFullName = $"{author.FirstName} {author.LastName}"
-       
-            };
+            var UpdateDdto = _mapper.Map<BookViewDto>(bookDto);
 
             return Ok(UpdateDdto);
         }

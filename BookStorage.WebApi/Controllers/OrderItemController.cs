@@ -1,6 +1,7 @@
 ﻿using BookStorage.WebApi.DTOs.OrderItem;
 using Microsoft.AspNetCore.Mvc;
 using BookStorage.Domain.Models;
+using AutoMapper;
 
 namespace BookStorage.WebApi.Controllers
 {
@@ -8,6 +9,14 @@ namespace BookStorage.WebApi.Controllers
     [Route("api/[controller]")]
     public class OrderItemController : ControllerBase
     {
+
+        private readonly IMapper _mapper;
+
+        public OrderItemController(IMapper mapper)
+        {
+            _mapper = mapper;
+        }
+
         public static readonly List<OrderItem> _orderItems = new List<OrderItem>
         {
           new OrderItem
@@ -37,13 +46,7 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<OrderItemViewDto>), 200)]
         public ActionResult<IEnumerable<OrderItem>> GetAll()
         {
-            var orderItemsDto = _orderItems.Select(a => new OrderItemViewDto
-            {
-                Id = a.Id,
-                OrderId = a.OrderId,
-                BookId = a.BookId,
-            });
-
+            var orderItemsDto = _mapper.Map<List<OrderItemViewDto>>(_orderItems);
             return Ok(_orderItems);
         }
 
@@ -65,12 +68,7 @@ namespace BookStorage.WebApi.Controllers
                 return NotFound();
             }
 
-            var orderItemDto = new OrderItemViewDto
-            {
-                Id = orderItem.Id,
-                OrderId = orderItem.OrderId,
-                BookId = orderItem.BookId,
-            };
+            var orderItemDto = _mapper.Map<OrderItemViewDto>(orderItem);
 
             return Ok(orderItemDto);
         }
@@ -92,23 +90,11 @@ namespace BookStorage.WebApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            var orderItem = new OrderItem
-            {
-                Id = Guid.NewGuid(),
-                OrderId = orderItemDto.OrderId,
-                BookId = orderItemDto.BookId,
-                Order = new Order(),
-                Book = new Book()
-            };
+            var orderItem = _mapper.Map<OrderItem>(orderItemDto);
 
             _orderItems.Add(orderItem);
 
-            var createdOrderItem = new OrderItemViewDto
-            {
-                Id = orderItem.Id,
-                OrderId = orderItemDto.OrderId,
-                BookId = orderItemDto.BookId,
-            };
+            var createdOrderItem = _mapper.Map<OrderItemViewDto>(orderItem);
 
             return StatusCode(201, createdOrderItem);
         }
@@ -132,14 +118,9 @@ namespace BookStorage.WebApi.Controllers
                 return NotFound();
             }
 
-            existingOrderItem.OrderId = orderItemDto.OrderId;
-            existingOrderItem.BookId = orderItemDto.BookId;
+            _mapper.Map(orderItemDto, existingOrderItem);
 
-            var updatedOrderItem = new OrderItemViewDto
-            {
-                Id = existingOrderItem.OrderId,
-                OrderId = existingOrderItem.OrderId,
-            };
+            var updatedOrderItem = _mapper.Map<OrderItemViewDto>(existingOrderItem);
 
             return Ok(updatedOrderItem);
         }
