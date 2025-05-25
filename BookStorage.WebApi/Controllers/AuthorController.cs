@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using AutoMapper;
 using BookStorage.WebApi.DTOs.Author;
+using BookStorage.Application.Interfaces.Services;
+using AutoMapper;
 using BookStorage.Domain.Models;
 
 namespace BookStorage.WebApi.Controllers
@@ -9,32 +10,14 @@ namespace BookStorage.WebApi.Controllers
     [Route("api/[controller]")]
     public class AuthorController : ControllerBase
     {
+        private readonly IAuthorService _authorService;
         private readonly IMapper _mapper;
 
-        public AuthorController(IMapper mapper)
+        public AuthorController(IAuthorService authorService, IMapper mapper)
         {
+            _authorService = authorService;
             _mapper = mapper;
         }
-
-        public static readonly List<Author> _authors = new List<Author>
-        {
-            new Author 
-            {
-                Id = Guid.NewGuid(),
-                FirstName = "Jack",
-                LastName = "London",
-                BirthDate = new DateTime(1876, 12, 1),
-                Books = new List<Book>()
-            },
-            new Author
-            {
-                Id = Guid.NewGuid(),
-                FirstName = "Leo",
-                LastName = "Tolstoy",
-                BirthDate = new DateTime(1910, 11, 20),
-                Books = new List<Book>()
-            }
-        };
 
         /// <summary>
         /// Retrieves all authors available in the system
@@ -45,7 +28,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<AuthorViewDto>), 200)]
         public ActionResult<IEnumerable<AuthorViewDto>> GetAll()
         {
-            var authorsDto = _mapper.Map <List<AuthorViewDto>>(_authors);
+            var authors = _authorService.GetAll();
+            
+            var authorsDto = _mapper.Map<List<AuthorViewDto>>(authors);
 
             return Ok(authorsDto);
         }
@@ -62,11 +47,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<AuthorViewDto> GetById([FromRoute] Guid id)
         {
-            var author = _authors.FirstOrDefault(a => a.Id == id);
+            var author = _authorService.GetById(id);
             if (author == null)
-            {
                 return NotFound();
-            }
 
             var authorDto = _mapper.Map<AuthorViewDto>(author);
            
@@ -95,17 +78,13 @@ namespace BookStorage.WebApi.Controllers
         public ActionResult<AuthorViewDto> Create([FromBody] CreateAuthorDto authorDto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
-            var author = _mapper.Map<Author> (authorDto);
-            author.Id = Guid.NewGuid();
-            author.Books = new List<Book>();
-            
-            _authors.Add(author);
+            var author = _mapper.Map<Author>(authorDto);
 
-            var createdDto = _mapper.Map<AuthorViewDto>(author);
+            var createdAuthor = _authorService.Create(author);
+
+            var createdDto = _mapper.Map<AuthorViewDto>(createdAuthor);
 
             return StatusCode(201, createdDto);
         }
@@ -123,17 +102,17 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<AuthorViewDto> Update([FromRoute] Guid id, [FromBody] UpdateAuthorDto authorDto)
         {
-            var existingAuthor = _authors.FirstOrDefault(a => a.Id == id);
+            var existingAuthor = _authorService.GetById(id);
             if (existingAuthor == null)
-            {
                 return NotFound();
-            }
 
-            _mapper.Map(authorDto, existingAuthor);
+            var authorToUpdate = _mapper.Map<Author>(authorDto);
 
-            var updatedDto = _mapper.Map<AuthorViewDto>(existingAuthor);
+            var updatedAuthor = _authorService.Update(id, authorToUpdate);
 
-            return Ok(updatedDto);
+            var authorViewDto = _mapper.Map<AuthorViewDto>(updatedAuthor);
+
+            return Ok(authorViewDto);
         }
 
         /// <summary>
@@ -147,13 +126,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult Delete([FromRoute] Guid id)
         {
-            var authorToDelete = _authors.FirstOrDefault(a => a.Id == id);
+            var authorToDelete = _authorService.Delete(id);
             if (authorToDelete == null)
-            {
                 return NotFound();
-            }
-
-            _authors.Remove(authorToDelete);
 
             return NoContent();
         }

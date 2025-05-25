@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BookStorage.Domain.Models;
 using AutoMapper;
+using BookStorage.Application.Interfaces.Services;
 
 namespace BookStorage.WebApi.Controllers
 {
@@ -9,34 +10,13 @@ namespace BookStorage.WebApi.Controllers
     [Route("api/[controller]")]
     public class OrderController : ControllerBase
     {
-
         private readonly IMapper _mapper;
-        public OrderController(IMapper mapper)
+        private readonly IOrderService _orderService;
+        public OrderController(IMapper mapper, IOrderService orderService)
         {
             _mapper = mapper;
+            _orderService = orderService;
         }
-
-        public static readonly List<Order> _orders = new List<Order>
-        {
-          new Order
-          {
-              Id = Guid.NewGuid(),
-              TotalAmount  = 200,
-              OrderDate = new DateTime(),
-              CustomerId  = Guid.NewGuid(),
-              Customer = new Customer(),
-              OrderItems = new List<OrderItem>()
-          },
-          new Order
-          {
-              Id = Guid.NewGuid(),
-              TotalAmount  = 500,
-              OrderDate = new DateTime(),
-              CustomerId  = Guid.NewGuid(),
-              Customer = new Customer(),
-              OrderItems = new List<OrderItem>()
-          }
-        };
 
         /// <summary>
         /// Retrieves all orders available in the system
@@ -47,7 +27,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<OrderViewDto>), 200)]
         public ActionResult<IEnumerable<OrderViewDto>> GetAll()
         {
-            var ordersDto = _mapper.Map<List<OrderViewDto>>(_orders);
+            var orders = _orderService.GetAll();
+
+            var ordersDto = _mapper.Map<List<OrderViewDto>>(orders);
             
             return Ok(ordersDto);
         }
@@ -64,11 +46,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<OrderViewDto> GetById([FromRoute] Guid id)
         {
-            var order = _orders.FirstOrDefault(a => a.Id == id);
+            var order = _orderService.GetById(id);
             if (order == null)
-            {
                 return NotFound();
-            }
 
             var orderDto = _mapper.Map<OrderViewDto>(order);
             return Ok(orderDto);
@@ -95,17 +75,15 @@ namespace BookStorage.WebApi.Controllers
         public ActionResult<OrderViewDto> Create([FromBody] CreateOrderDto orderDto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             var order = _mapper.Map<Order>(orderDto);
 
-            _orders.Add(order);
+            var createdOrder = _orderService.Create(order);
 
-            var createdOrder = _mapper.Map<OrderViewDto>(order);
+            var createdDto = _mapper.Map<OrderViewDto>(order);
 
-            return StatusCode(201, createdOrder);
+            return StatusCode(201, createdDto);
         }
 
         /// <summary>
@@ -121,16 +99,15 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<OrderViewDto> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
         {
-            var existingOrder = _orders.FirstOrDefault(x => x.Id == id);
-
+            var existingOrder = _orderService.GetById(id);
             if (existingOrder == null)
-            {
                 return NotFound();
-            }
 
-            _mapper.Map(orderDto, existingOrder);
+            var orderToUpdate = _mapper.Map<Order>(orderDto);
 
-            var updatedDto = _mapper.Map<OrderViewDto>(existingOrder);
+            var updatedOrder = _orderService.Update(id, orderToUpdate);
+
+            var updatedDto = _mapper.Map<OrderViewDto>(updatedOrder);
             
             return Ok(updatedDto);
         }
@@ -146,14 +123,10 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult Delete([FromRoute] Guid id)
         {
-            var order = _orders.FirstOrDefault(x => x.Id == id);
-            if (order == null)
-            {
+            var orderToDelere = _orderService.Delete(id);
+            if (orderToDelere == null)
                 return NotFound();
-            }
 
-            _orders.Remove(order);
-            
             return NoContent();
         }
     }

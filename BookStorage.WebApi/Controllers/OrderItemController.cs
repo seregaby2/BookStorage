@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BookStorage.Domain.Models;
 using AutoMapper;
+using BookStorage.Application.Interfaces.Services;
 
 namespace BookStorage.WebApi.Controllers
 {
@@ -9,33 +10,14 @@ namespace BookStorage.WebApi.Controllers
     [Route("api/[controller]")]
     public class OrderItemController : ControllerBase
     {
-
         private readonly IMapper _mapper;
+        private readonly IOrderItemService _orderItemService;
 
-        public OrderItemController(IMapper mapper)
+        public OrderItemController(IMapper mapper, IOrderItemService orderItemService)
         {
             _mapper = mapper;
+            _orderItemService = orderItemService;
         }
-
-        public static readonly List<OrderItem> _orderItems = new List<OrderItem>
-        {
-          new OrderItem
-          {
-              Id = Guid.NewGuid(),
-              OrderId  = Guid.NewGuid(),
-              Order = new Order(),
-              BookId = Guid.NewGuid(),
-              Book = new Book()
-          },
-          new OrderItem
-          {
-              Id = Guid.NewGuid(),
-              OrderId  = Guid.NewGuid(),
-              Order = new Order(),
-              BookId = Guid.NewGuid(),
-              Book = new Book()
-          },
-        };
 
         /// <summary>
         /// Retrieves all orderItems available in the system
@@ -46,8 +28,11 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<OrderItemViewDto>), 200)]
         public ActionResult<IEnumerable<OrderItem>> GetAll()
         {
-            var orderItemsDto = _mapper.Map<List<OrderItemViewDto>>(_orderItems);
-            return Ok(_orderItems);
+            var orderItems = _orderItemService.GetAll();
+
+            var orderItemsDto = _mapper.Map<List<OrderItemViewDto>>(orderItems);
+
+            return Ok(orderItems);
         }
 
         /// <summary>
@@ -62,11 +47,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<OrderItemViewDto> GetById([FromRoute] Guid id)
         {
-            var orderItem = _orderItems.FirstOrDefault(x => x.Id == id);
+            var orderItem = _orderItemService.GetById(id);
             if (orderItem == null)
-            {
                 return NotFound();
-            }
 
             var orderItemDto = _mapper.Map<OrderItemViewDto>(orderItem);
 
@@ -86,17 +69,15 @@ namespace BookStorage.WebApi.Controllers
         public ActionResult<OrderItemViewDto> Create([FromBody] CreateOrderItemDto orderItemDto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             var orderItem = _mapper.Map<OrderItem>(orderItemDto);
 
-            _orderItems.Add(orderItem);
+            var createdOrderItem = _orderItemService.Create(orderItem);
 
-            var createdOrderItem = _mapper.Map<OrderItemViewDto>(orderItem);
+            var createdDto = _mapper.Map<OrderItemViewDto>(orderItem);
 
-            return StatusCode(201, createdOrderItem);
+            return StatusCode(201, createdDto);
         }
 
         /// <summary>
@@ -112,17 +93,17 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<OrderItemViewDto> Update([FromRoute] Guid id, [FromBody] UpdateOrderItemDto orderItemDto)
         {
-            var existingOrderItem = _orderItems.FirstOrDefault(x => x.Id == id);
+            var existingOrderItem = _orderItemService.GetById(id);
             if (existingOrderItem == null)
-            {
                 return NotFound();
-            }
 
-            _mapper.Map(orderItemDto, existingOrderItem);
+            var orderItemToUpdate = _mapper.Map<OrderItem>(orderItemDto);
 
-            var updatedOrderItem = _mapper.Map<OrderItemViewDto>(existingOrderItem);
+            var updatedOrderItem = _orderItemService.Update(id, orderItemToUpdate);
 
-            return Ok(updatedOrderItem);
+            var updatedDto = _mapper.Map<OrderItemViewDto>(updatedOrderItem);
+
+            return Ok(updatedDto);
         }
 
         /// <summary>
@@ -136,13 +117,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult Delete([FromRoute] Guid id)
         {
-            var orderItem = _orderItems.FirstOrDefault(x => x.Id == id);
-            if (orderItem == null)
-            {
+            var orderItemToDelete = _orderItemService.Delete(id);
+            if (orderItemToDelete == null)
                 return NotFound();
-            }
-
-            _orderItems.Remove(orderItem);
 
             return NoContent();
         }

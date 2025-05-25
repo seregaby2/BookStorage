@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BookStorage.Domain.Models;
 using AutoMapper;
+using BookStorage.Application.Interfaces.Services;
 
 namespace BookStorage.WebApi.Controllers
 {
@@ -10,32 +11,12 @@ namespace BookStorage.WebApi.Controllers
     public class CustomerController : ControllerBase
     {
         private readonly IMapper _mapper;
-        public CustomerController(IMapper mapper)
+        private readonly ICustomerService _customerService;
+        public CustomerController(IMapper mapper, ICustomerService customerService)
         {
             _mapper = mapper;
+            _customerService = customerService;
         }
-
-        public static readonly List<Customer> _customers = new List<Customer>
-        {
-          new Customer
-          {
-              Id = Guid.NewGuid(),
-              Email  = "s.@gmail.com",
-              Name  = "Alex",
-              PhoneNumber  = "+375297777777",
-              PurchasehDate = new DateTime(),
-              Orders = new List<Order>()
-          },
-          new Customer
-          {
-              Id = Guid.NewGuid(),
-              Email  = "v.@gmail.com",
-              Name  = "Mark",
-              PhoneNumber  = "+375291111111",
-              PurchasehDate = new DateTime(),
-              Orders = new List<Order>()
-          },
-        };
 
         /// <summary>
         /// Retrieves all customers available in the system
@@ -46,7 +27,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(typeof(IEnumerable<CustomerViewDto>), 200)]
         public ActionResult<IEnumerable<CustomerViewDto>> GetAll()
         {
-            var customerDto = _mapper.Map<List<CustomerViewDto>>(_customers);
+            var customers = _customerService.GetAll();
+
+            var customerDto = _mapper.Map<List<CustomerViewDto>>(customers);
 
             return Ok(customerDto);
         }
@@ -63,11 +46,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<CustomerViewDto> GetById([FromRoute] Guid id)
         {
-            var customer = _customers.FirstOrDefault(x => x.Id == id);
+            var customer = _customerService.GetById(id);
             if (customer == null)
-            {
                 return NotFound();
-            }
 
             var customerDto = _mapper.Map<CustomerViewDto>(customer);
             return Ok(customerDto);
@@ -96,17 +77,15 @@ namespace BookStorage.WebApi.Controllers
         public ActionResult<CustomerViewDto> Create([FromBody] CreateCustomerDto customerDto)
         {
             if (!ModelState.IsValid)
-            {
                 return BadRequest(ModelState);
-            }
 
             var customer = _mapper.Map<Customer>(customerDto);
 
-            _customers.Add(customer);
+            var createdCustomer = _customerService.Create(customer);
 
-            var createdDto = _mapper.Map<CustomerViewDto>(customer);
+            var createdDto = _mapper.Map<CustomerViewDto>(createdCustomer);
 
-            return StatusCode(201, createdDto); ;
+            return StatusCode(201, createdDto);
         }
 
         /// <summary>
@@ -122,15 +101,16 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<CustomerViewDto> Update([FromRoute] Guid id, [FromBody] UpdateCustomerDto customerDto)
         {
-            var existingCustomer = _customers.FirstOrDefault(x => x.Id == id);
+            var existingCustomer = _customerService.GetById(id);
             if (existingCustomer == null)
-            {
                 return NotFound();
-            }
 
-            _mapper.Map(customerDto, existingCustomer);
+            var customerToUpdate = _mapper.Map<Customer>(existingCustomer);
 
-            var updatedDto = _mapper.Map<CustomerViewDto>(existingCustomer);
+            var updatedCustomer = _customerService.Update(id, customerToUpdate);
+
+            var customerViewDto = _mapper.Map<CustomerViewDto>(updatedCustomer);
+
             return Ok(existingCustomer);
         }
 
@@ -145,12 +125,9 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult Delete([FromRoute] Guid id)
         {
-            var customer = _customers.FirstOrDefault(x => x.Id == id);
-            if (customer == null)
-            {
+            var customerToDelete = _customerService.Delete(id);
+            if (customerToDelete == null)
                 return NotFound();
-            }
-            _customers.Remove(customer);
 
             return NoContent();
         }
