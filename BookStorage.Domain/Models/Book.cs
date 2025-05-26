@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using BookStorage.Domain.Enums;
 
 namespace BookStorage.Domain.Models
 {
@@ -7,7 +8,7 @@ namespace BookStorage.Domain.Models
         [Key]
         public Guid Id { get; set; }
         public string Title { get; set; } = "unknown";
-        public string Genre { get; set; } = "unknown";
+        public BookGenre Genre { get; set; } = BookGenre.Unknown;
         public DateTime PublishDate { get; set; }
         public decimal Price { get; set; }
         public Guid AuthrID { get; set; }

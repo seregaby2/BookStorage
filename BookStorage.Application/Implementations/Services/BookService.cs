@@ -1,5 +1,6 @@
 ﻿using BookStorage.Application.Interfaces.Services;
 using BookStorage.Domain.Models;
+using BookStorage.Domain.Enums;
 
 namespace BookStorage.Application.Implementations.Services
 {
@@ -11,7 +12,7 @@ namespace BookStorage.Application.Implementations.Services
             {
                 Id = Guid.NewGuid(),
                 Title = "White Fang",
-                Genre = "Adventure",
+                Genre = BookGenre.Adventure,
                 Price = 100,
                 PublishDate = new DateTime(1906,10,1),
                 Author = new Author(),
@@ -21,7 +22,7 @@ namespace BookStorage.Application.Implementations.Services
             {
                 Id = Guid.NewGuid(),
                 Title = "War and Peace",
-                Genre = "Novel",
+                Genre = BookGenre.Novel,
                 Price = 150,
                 PublishDate = new DateTime(1869,12,1),
                 Author = new Author(),
