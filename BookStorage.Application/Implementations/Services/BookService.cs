@@ -1,79 +1,95 @@
-﻿using BookStorage.Application.Interfaces.Services;
-using BookStorage.Domain.Models;
+using BookStorage.Application.Interfaces.Services;
 using BookStorage.Domain.Enums;
+using BookStorage.Domain.Models;
 
 namespace BookStorage.Application.Implementations.Services
 {
-    public class BookService : IBookService
-    {
-        private static readonly List<Book> Books =
-        [
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Title = "White Fang",
-                Genre = BookGenre.Adventure,
-                Price = 100,
-                PublishDate = new DateTime(1906,10,1),
-                Author = new Author(),
-                AuthrID = Guid.NewGuid()
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                Title = "War and Peace",
-                Genre = BookGenre.Novel,
-                Price = 150,
-                PublishDate = new DateTime(1869,12,1),
-                Author = new Author(),
-                AuthrID = Guid.NewGuid()
-            }
-        ];
+	public class BookService : IBookService
+	{
+		private readonly IAuthorService _authorService;
+		private static readonly List<Book> Books =
+		[
+			new()
+			{
+				Id = Guid.NewGuid(),
+				Title = "White Fang",
+				Genre = BookGenre.Adventure,
+				Price = 100,
+				PublishDate = new DateTime(1906,10,1),
+				Author = new Author(),
+				AuthorID = Guid.NewGuid()
+			},
+			new()
+			{
+				Id = Guid.NewGuid(),
+				Title = "War and Peace",
+				Genre = BookGenre.Novel,
+				Price = 150,
+				PublishDate = new DateTime(1869,12,1),
+				Author = new Author(),
+				AuthorID = Guid.NewGuid()
+			}
+		];
 
-        public IEnumerable<Book> GetAll()
-        {
-            return Books;
-        }
+		public BookService(IAuthorService authorService)
+		{
+			_authorService = authorService;
+		}
 
-        public Book? GetById(Guid id)
-        {
-            var book = Books.FirstOrDefault(a => a.Id == id);
+		public IEnumerable<Book> GetAll()
+		{
+			return Books;
+		}
 
-            return book;
-        }
+		public Book? GetById(Guid id)
+		{
+			var book = Books.FirstOrDefault(a => a.Id == id);
 
-        public Book Create(Book book)
-        {
-            book.Id = Guid.NewGuid();
+			return book;
+		}
 
-            Books.Add(book);
+		public Book? Create(Book book)
+		{
+			var author = _authorService.GetById(book.AuthorID);
+			if (author == null)
+				return null;
 
-            return book;
-        }
+			book.Id = Guid.NewGuid();
 
-        public Book? Update(Guid id, Book book)
-        {
-            var existingBook = Books.FirstOrDefault(a => a.Id == id);
-            if (existingBook == null)
-                return null;
+			Books.Add(book);
 
-            existingBook.AuthrID = book.AuthrID;
-            existingBook.PublishDate = book.PublishDate;
-            existingBook.Price = book.Price;
-            existingBook.Genre = book.Genre;
+			return book;
+		}
 
-            return existingBook;
-        }
+		public Book? Update(Guid id, Book book)
+		{
+			var author = _authorService.GetById(book.AuthorID);
+			if (author == null)
+				return null;
 
-        public Book? Delete(Guid id)
-        {
-            var bookToDelete = Books.FirstOrDefault(a => a.Id == id);
-            if (bookToDelete == null)
-                return null;
+			var existingBook = Books.FirstOrDefault(a => a.Id == id);
+			if (existingBook == null)
+				return null;
 
-            Books.Remove(bookToDelete);
+			existingBook.Title = book.Title;
+			existingBook.Price = book.Price;
+			existingBook.Genre = book.Genre;
 
-            return bookToDelete;
-        }
-    }
+			return existingBook;
+		}
+
+		public bool Delete(Guid id)
+		{
+			var bookToDelete = Books.FirstOrDefault(a => a.Id == id);
+			if (bookToDelete == null)
+				return false;
+
+			return Books.Remove(bookToDelete);
+		}
+
+		public void DeleteByAuthorId(Guid authorId)
+		{
+			throw new NotImplementedException();
+		}
+	}
 }

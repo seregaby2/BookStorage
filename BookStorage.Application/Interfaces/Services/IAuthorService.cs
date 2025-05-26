@@ -1,4 +1,4 @@
-﻿using BookStorage.Domain.Models;
+using BookStorage.Domain.Models;
 
 namespace BookStorage.Application.Interfaces.Services
 {
@@ -6,8 +6,8 @@ namespace BookStorage.Application.Interfaces.Services
     {
         IEnumerable<Author> GetAll();
         Author? GetById(Guid id);
-        Author Create(Author author);
+        Author? Create(Author author);
         Author? Update(Guid id, Author author);
-        Author? Delete(Guid id);
+        bool Delete(Guid id);
     }
 }

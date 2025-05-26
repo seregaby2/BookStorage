@@ -1,8 +1,8 @@
-﻿using BookStorage.WebApi.DTOs.Order;
-using Microsoft.AspNetCore.Mvc;
-using BookStorage.Domain.Models;
 using AutoMapper;
 using BookStorage.Application.Interfaces.Services;
+using BookStorage.Domain.Models;
+using BookStorage.WebApi.DTOs.Order;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
 {
@@ -30,7 +30,7 @@ namespace BookStorage.WebApi.Controllers
             var orders = _orderService.GetAll();
 
             var ordersDto = _mapper.Map<List<OrderViewDto>>(orders);
-            
+
             return Ok(ordersDto);
         }
 
@@ -100,16 +100,14 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult<OrderViewDto> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
         {
-            var existingOrder = _orderService.GetById(id);
-            if (existingOrder == null)
-                return NotFound();
-
             var orderToUpdate = _mapper.Map<Order>(orderDto);
 
             var updatedOrder = _orderService.Update(id, orderToUpdate);
+            if (updatedOrder == null)
+                return NotFound();
 
             var updatedDto = _mapper.Map<OrderViewDto>(updatedOrder);
-            
+
             return Ok(updatedDto);
         }
 
@@ -125,7 +123,7 @@ namespace BookStorage.WebApi.Controllers
         public ActionResult Delete([FromRoute] Guid id)
         {
             var orderToDelete = _orderService.Delete(id);
-            if (orderToDelete == null)
+            if (orderToDelete)
                 return NotFound();
 
             return NoContent();

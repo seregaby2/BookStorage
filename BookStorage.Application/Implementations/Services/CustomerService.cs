@@ -1,4 +1,4 @@
-﻿using BookStorage.Application.Interfaces.Services;
+using BookStorage.Application.Interfaces.Services;
 using BookStorage.Domain.Models;
 
 namespace BookStorage.Application.Implementations.Services
@@ -39,8 +39,13 @@ namespace BookStorage.Application.Implementations.Services
             return customer;
         }
 
-        public Customer Create(Customer customer)
+        public Customer? Create(Customer customer)
         {
+            bool exists = Customers.Any(a =>
+                string.Equals(a.Email, customer.Email, StringComparison.OrdinalIgnoreCase));
+            if (exists)
+                return null;
+
             customer.Id = Guid.NewGuid();
 
             Customers.Add(customer);
@@ -62,15 +67,13 @@ namespace BookStorage.Application.Implementations.Services
             return existingCustomer;
         }
 
-        public Customer? Delete(Guid id)
+        public bool Delete(Guid id)
         {
             var customerToDelete = Customers.FirstOrDefault(a => a.Id == id);
             if (customerToDelete == null)
-                return null;
+                return false;
 
-            Customers.Remove(customerToDelete);
-
-            return customerToDelete;
+            return Customers.Remove(customerToDelete);
         }
     }
 }

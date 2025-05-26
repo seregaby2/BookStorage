@@ -1,6 +1,6 @@
-﻿using AutoMapper;
-using BookStorage.WebApi.DTOs.Author;
+using AutoMapper;
 using BookStorage.Domain.Models;
+using BookStorage.WebApi.DTOs.Author;
 
 namespace BookStorage.WebApi.Mapping
 {

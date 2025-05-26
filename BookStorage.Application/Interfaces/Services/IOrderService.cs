@@ -1,4 +1,4 @@
-﻿using BookStorage.Domain.Models;
+using BookStorage.Domain.Models;
 
 namespace BookStorage.Application.Interfaces.Services
 {
@@ -8,6 +8,6 @@ namespace BookStorage.Application.Interfaces.Services
         Order? GetById(Guid id);
         Order Create(Order order);
         Order? Update(Guid id, Order order);
-        Order? Delete(Guid id);
+        bool Delete(Guid id);
     }
 }
