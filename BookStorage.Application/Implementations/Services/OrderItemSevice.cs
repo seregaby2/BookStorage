@@ -5,35 +5,33 @@ namespace BookStorage.Application.Implementations.Services
 {
     public class OrderItemService : IOrderItemService
     {
-        public static readonly List<OrderItem> _ordersItem = new List<OrderItem>
-        {
-            new OrderItem
-          {
-              Id = Guid.NewGuid(),
-              OrderId  = Guid.NewGuid(),
-              Order = new Order(),
-              BookId = Guid.NewGuid(),
-              Book = new Book()
-          },
-          new OrderItem
-          {
-              Id = Guid.NewGuid(),
-              OrderId  = Guid.NewGuid(),
-              Order = new Order(),
-              BookId = Guid.NewGuid(),
-              Book = new Book()
-          },
-        };
+        private static readonly List<OrderItem> OrderItems =
+        [
+            new()
+            {
+                Id = Guid.NewGuid(),
+                OrderId  = Guid.NewGuid(),
+                Order = new Order(),
+                BookId = Guid.NewGuid(),
+                Book = new Book()
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                OrderId  = Guid.NewGuid(),
+                Order = new Order(),
+                BookId = Guid.NewGuid(),
+                Book = new Book()
+            }
+        ];
         public IEnumerable<OrderItem> GetAll()
         {
-            return _ordersItem;
+            return OrderItems;
         }
 
         public OrderItem? GetById(Guid id)
         {
-            var orderItem = _ordersItem.FirstOrDefault(a => a.Id == id);
-            if (orderItem == null)
-                return null;
+            var orderItem = OrderItems.FirstOrDefault(a => a.Id == id);
 
             return orderItem;
         }
@@ -42,14 +40,14 @@ namespace BookStorage.Application.Implementations.Services
         {
             orderItem.Id = Guid.NewGuid();
 
-            _ordersItem.Add(orderItem);
+            OrderItems.Add(orderItem);
 
             return orderItem;
         }
 
         public OrderItem? Update(Guid id, OrderItem orderItem)
         {
-            var existingOrderItem = _ordersItem.FirstOrDefault(a => a.Id == id);
+            var existingOrderItem = OrderItems.FirstOrDefault(a => a.Id == id);
             if (existingOrderItem == null)
                 return null;
 
@@ -61,11 +59,11 @@ namespace BookStorage.Application.Implementations.Services
 
         public OrderItem? Delete(Guid id)
         {
-            var orderToDelete = _ordersItem.FirstOrDefault(a => a.Id == id);
+            var orderToDelete = OrderItems.FirstOrDefault(a => a.Id == id);
             if (orderToDelete == null)
                 return null;
 
-            _ordersItem.Remove(orderToDelete);
+            OrderItems.Remove(orderToDelete);
 
             return orderToDelete;
         }

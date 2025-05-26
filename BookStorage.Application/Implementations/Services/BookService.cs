@@ -5,9 +5,9 @@ namespace BookStorage.Application.Implementations.Services
 {
     public class BookService : IBookService
     {
-        public static readonly List<Book> _books = new List<Book>
-        {
-            new Book
+        private static readonly List<Book> Books =
+        [
+            new()
             {
                 Id = Guid.NewGuid(),
                 Title = "White Fang",
@@ -17,7 +17,7 @@ namespace BookStorage.Application.Implementations.Services
                 Author = new Author(),
                 AuthrID = Guid.NewGuid()
             },
-            new Book
+            new()
             {
                 Id = Guid.NewGuid(),
                 Title = "War and Peace",
@@ -27,18 +27,16 @@ namespace BookStorage.Application.Implementations.Services
                 Author = new Author(),
                 AuthrID = Guid.NewGuid()
             }
-        };
+        ];
 
         public IEnumerable<Book> GetAll()
         {
-            return _books;
+            return Books;
         }
 
         public Book? GetById(Guid id)
         {
-            var book = _books.FirstOrDefault(a => a.Id == id);
-            if (book == null)
-                return null;
+            var book = Books.FirstOrDefault(a => a.Id == id);
 
             return book;
         }
@@ -47,14 +45,14 @@ namespace BookStorage.Application.Implementations.Services
         {
             book.Id = Guid.NewGuid();
 
-            _books.Add(book);
+            Books.Add(book);
 
             return book;
         }
 
         public Book? Update(Guid id, Book book)
         {
-            var existingBook = _books.FirstOrDefault(a => a.Id == id);
+            var existingBook = Books.FirstOrDefault(a => a.Id == id);
             if (existingBook == null)
                 return null;
 
@@ -68,11 +66,11 @@ namespace BookStorage.Application.Implementations.Services
 
         public Book? Delete(Guid id)
         {
-            var bookToDelete = _books.FirstOrDefault(a => a.Id == id);
+            var bookToDelete = Books.FirstOrDefault(a => a.Id == id);
             if (bookToDelete == null)
                 return null;
 
-            _books.Remove(bookToDelete);
+            Books.Remove(bookToDelete);
 
             return bookToDelete;
         }

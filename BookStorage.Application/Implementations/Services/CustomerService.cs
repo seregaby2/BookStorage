@@ -5,38 +5,36 @@ namespace BookStorage.Application.Implementations.Services
 {
     public class CustomerService : ICustomerService
     {
-        public static readonly List<Customer> _customers = new List<Customer>
-        {
-            new Customer
-          {
-              Id = Guid.NewGuid(),
-              Email  = "s.@gmail.com",
-              Name  = "Alex",
-              PhoneNumber  = "+375297777777",
-              PurchasehDate = new DateTime(),
-              Orders = new List<Order>()
-          },
-          new Customer
-          {
-              Id = Guid.NewGuid(),
-              Email  = "v.@gmail.com",
-              Name  = "Mark",
-              PhoneNumber  = "+375291111111",
-              PurchasehDate = new DateTime(),
-              Orders = new List<Order>()
-          },
-        };
+        private static readonly List<Customer> Customers =
+        [
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Email  = "s.@gmail.com",
+                Name  = "Alex",
+                PhoneNumber  = "+375297777777",
+                PurchasehDate = new DateTime(),
+                Orders = new List<Order>()
+            },
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Email  = "v.@gmail.com",
+                Name  = "Mark",
+                PhoneNumber  = "+375291111111",
+                PurchasehDate = new DateTime(),
+                Orders = new List<Order>()
+            }
+        ];
 
         public IEnumerable<Customer> GetAll()
         {
-            return _customers;
+            return Customers;
         }
 
         public Customer? GetById(Guid id)
         {
-            var customer = _customers.FirstOrDefault(a => a.Id == id);
-            if (customer == null)
-                return null;
+            var customer = Customers.FirstOrDefault(a => a.Id == id);
 
             return customer;
         }
@@ -45,14 +43,14 @@ namespace BookStorage.Application.Implementations.Services
         {
             customer.Id = Guid.NewGuid();
 
-            _customers.Add(customer);
+            Customers.Add(customer);
 
             return customer;
         }
 
         public Customer? Update(Guid id, Customer customer)
         {
-            var existingCustomer = _customers.FirstOrDefault(a => a.Id == id);
+            var existingCustomer = Customers.FirstOrDefault(a => a.Id == id);
             if (existingCustomer == null)
                 return null;
 
@@ -66,11 +64,11 @@ namespace BookStorage.Application.Implementations.Services
 
         public Customer? Delete(Guid id)
         {
-            var customerToDelete = _customers.FirstOrDefault(a => a.Id == id);
+            var customerToDelete = Customers.FirstOrDefault(a => a.Id == id);
             if (customerToDelete == null)
                 return null;
-            
-            _customers.Remove(customerToDelete);
+
+            Customers.Remove(customerToDelete);
 
             return customerToDelete;
         }

@@ -32,7 +32,7 @@ namespace BookStorage.WebApi.Controllers
 
             var orderItemsDto = _mapper.Map<List<OrderItemViewDto>>(orderItems);
 
-            return Ok(orderItems);
+            return Ok(orderItemsDto);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace BookStorage.WebApi.Controllers
 
             var createdOrderItem = _orderItemService.Create(orderItem);
 
-            var createdDto = _mapper.Map<OrderItemViewDto>(orderItem);
+            var createdDto = _mapper.Map<OrderItemViewDto>(createdOrderItem);
 
             return StatusCode(201, createdDto);
         }

@@ -51,6 +51,7 @@ namespace BookStorage.WebApi.Controllers
                 return NotFound();
 
             var orderDto = _mapper.Map<OrderViewDto>(order);
+
             return Ok(orderDto);
         }
 
@@ -81,7 +82,7 @@ namespace BookStorage.WebApi.Controllers
 
             var createdOrder = _orderService.Create(order);
 
-            var createdDto = _mapper.Map<OrderViewDto>(order);
+            var createdDto = _mapper.Map<OrderViewDto>(createdOrder);
 
             return StatusCode(201, createdDto);
         }
@@ -123,8 +124,8 @@ namespace BookStorage.WebApi.Controllers
         [ProducesResponseType(404)]
         public ActionResult Delete([FromRoute] Guid id)
         {
-            var orderToDelere = _orderService.Delete(id);
-            if (orderToDelere == null)
+            var orderToDelete = _orderService.Delete(id);
+            if (orderToDelete == null)
                 return NotFound();
 
             return NoContent();

@@ -105,13 +105,13 @@ namespace BookStorage.WebApi.Controllers
             if (existingCustomer == null)
                 return NotFound();
 
-            var customerToUpdate = _mapper.Map<Customer>(existingCustomer);
+            var customerToUpdate = _mapper.Map<Customer>(customerDto);
 
             var updatedCustomer = _customerService.Update(id, customerToUpdate);
 
             var customerViewDto = _mapper.Map<CustomerViewDto>(updatedCustomer);
 
-            return Ok(existingCustomer);
+            return Ok(customerViewDto);
         }
 
         /// <summary>
