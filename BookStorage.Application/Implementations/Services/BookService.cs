@@ -89,7 +89,8 @@ namespace BookStorage.Application.Implementations.Services
 
 		public void DeleteByAuthorId(Guid authorId)
 		{
-			throw new NotImplementedException();
+			Books.RemoveAll(book => book.AuthorID == authorId);
+
 		}
 	}
 }

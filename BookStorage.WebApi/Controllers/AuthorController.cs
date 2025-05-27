@@ -129,7 +129,7 @@ namespace BookStorage.WebApi.Controllers
 		public ActionResult Delete([FromRoute] Guid id)
 		{
 			var isAuthorAndBooksDelete = _authorBookService.DeleteAuthorAndBooks(id);
-			if (isAuthorAndBooksDelete)
+			if (!isAuthorAndBooksDelete)
 				return NotFound();
 
 			return NoContent();

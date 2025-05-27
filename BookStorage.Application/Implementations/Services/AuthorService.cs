@@ -42,11 +42,9 @@ namespace BookStorage.Application.Implementations.Services
 			bool exists = Authors.Any(a =>
 				string.Equals(a.FirstName, author.FirstName, StringComparison.OrdinalIgnoreCase) &&
 				string.Equals(a.LastName, author.LastName, StringComparison.OrdinalIgnoreCase));
+
 			if (exists)
 				return null;
-
-			author.Id = Guid.NewGuid();
-			author.Books = new List<Book>();
 
 			Authors.Add(author);
 

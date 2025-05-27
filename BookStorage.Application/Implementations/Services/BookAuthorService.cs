@@ -15,12 +15,13 @@ namespace BookStorage.Application.Implementations.Services
 
 		public bool DeleteAuthorAndBooks(Guid authorId)
 		{
-			bool result = _authorService.Delete(authorId);
+			var authorExists = _authorService.GetById(authorId);
+			if (authorExists == null)
+				return false;
 
-			if (result)
-				_bookService.Delete(authorId);
+			_bookService.DeleteByAuthorId(authorId);
 
-			return result;
+			return _authorService.Delete(authorId);
 		}
 	}
 }
