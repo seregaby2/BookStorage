@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
 {
+	[ApiVersion("1.0")]
 	[ApiController]
-	[Route("api/[controller]")]
+	[Route("api/v{version:apiVersion}/[controller]")]
 	public class AuthorController : ControllerBase
 	{
 		private readonly IAuthorService _authorService;
