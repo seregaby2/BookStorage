@@ -1,78 +1,55 @@
 using BookStorage.Application.Interfaces.Services;
 using BookStorage.Domain.Models;
+using BookStorage.Infrastructure.Interfaces;
 
 namespace BookStorage.Application.Implementations.Services
 {
 	public class AuthorService : IAuthorService
 	{
-		private static readonly List<Author> Authors =
-		[
-			new()
-			{
-				Id = Guid.NewGuid(),
-				FirstName = "Jack",
-				LastName = "London",
-				BirthDate = new DateTime(1876, 12, 1),
-				Books = new List<Book>()
-			},
-			new()
-			{
-				Id = Guid.NewGuid(),
-				FirstName = "Leo",
-				LastName = "Tolstoy",
-				BirthDate = new DateTime(1910, 11, 20),
-				Books = new List<Book>()
-			}
-		];
+		private readonly IAuthorRepository _repository;
 
-		public IEnumerable<Author> GetAll()
+		public AuthorService(IAuthorRepository repository)
 		{
-			return Authors;
+			_repository = repository;
 		}
 
-		public Author? GetById(Guid id)
+		public async Task<IEnumerable<Author>> GetAll()
 		{
-			var author = Authors.FirstOrDefault(a => a.Id == id);
-
-			return author;
+			return await _repository.GetAllAsync();
 		}
 
-		public Author? Create(Author author)
+		public async Task<Author?> GetById(Guid id)
 		{
-			bool exists = Authors.Any(a =>
-				string.Equals(a.FirstName, author.FirstName, StringComparison.OrdinalIgnoreCase) &&
-				string.Equals(a.LastName, author.LastName, StringComparison.OrdinalIgnoreCase));
+			return await _repository.GetByIdAsync(id);
+		}
 
-			if (exists)
+		public async Task<Author?> Create(Author author)
+		{
+			var isExist = await _repository.CheckIfAuthorAlreadyExistsAsync(author.FirstName, author.LastName, author.BirthDate);
+			if (!isExist)
 				return null;
 
-			Authors.Add(author);
-
-			return author;
+			return await _repository.CreateAsync(author);
 		}
 
-		public Author? Update(Guid id, Author author)
+		public async Task<Author?> Update(Guid id, Author author)
 		{
-			var existingAuthor = Authors.FirstOrDefault(a => a.Id == id);
-			if (existingAuthor == null)
-				return null;
+			//var existingAuthor = Authors.FirstOrDefault(a => a.Id == id);
+			//if (existingAuthor == null)
+			//	return null;
 
-			existingAuthor.FirstName = author.FirstName;
-			existingAuthor.LastName = author.LastName;
-			existingAuthor.BirthDate = author.BirthDate;
-
-			return existingAuthor;
+			return await _repository.UpdateAsync(id, author);
 		}
 
-		public bool Delete(Guid id)
+		public async Task<bool> Delete(Guid id)
 		{
-			var authorToDelete = Authors.FirstOrDefault(a => a.Id == id);
-			if (authorToDelete == null)
-				return false;
+			//var authorToDelete = Authors.FirstOrDefault(a => a.Id == id);
+			//if (authorToDelete == null)
+			//	return false;
 
-			bool wasDeletedAuthor = Authors.Remove(authorToDelete);
+			//bool wasDeletedAuthor = Authors.Remove(authorToDelete);
 
-			return wasDeletedAuthor;
+			return await _repository.DeleteAsync(id);
 		}
 	}
 }
