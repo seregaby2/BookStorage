@@ -130,7 +130,7 @@ namespace BookStorage.WebApi.Controllers
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
 			var bookToDelete = await _bookService.Delete(id);
-			if (bookToDelete)
+			if (!bookToDelete)
 				return NotFound();
 
 			return NoContent();

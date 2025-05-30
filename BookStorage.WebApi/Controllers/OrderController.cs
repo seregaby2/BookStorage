@@ -26,9 +26,9 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the list of orders.</response>
 		[HttpGet]
 		[ProducesResponseType(typeof(IEnumerable<OrderViewDto>), 200)]
-		public ActionResult<IEnumerable<OrderViewDto>> GetAll()
+		public async Task<ActionResult<IEnumerable<OrderViewDto>>> GetAll()
 		{
-			var orders = _orderService.GetAll();
+			var orders = await _orderService.GetAll();
 
 			var ordersDto = _mapper.Map<List<OrderViewDto>>(orders);
 
@@ -45,9 +45,9 @@ namespace BookStorage.WebApi.Controllers
 		[HttpGet("{id}")]
 		[ProducesResponseType(typeof(OrderViewDto), 200)]
 		[ProducesResponseType(404)]
-		public ActionResult<OrderViewDto> GetById([FromRoute] Guid id)
+		public async Task<ActionResult<OrderViewDto>> GetById([FromRoute] Guid id)
 		{
-			var order = _orderService.GetById(id);
+			var order = await _orderService.GetById(id);
 			if (order == null)
 				return NotFound();
 
@@ -74,14 +74,14 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPost]
 		[ProducesResponseType(typeof(OrderViewDto), 201)]
 		[ProducesResponseType(400)]
-		public ActionResult<OrderViewDto> Create([FromBody] CreateOrderDto orderDto)
+		public async Task<ActionResult<OrderViewDto>> Create([FromBody] CreateOrderDto orderDto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
 			var order = _mapper.Map<Order>(orderDto);
 
-			var createdOrder = _orderService.Create(order);
+			var createdOrder = await _orderService.Create(order, orderDto.BookIds);
 
 			var createdDto = _mapper.Map<OrderViewDto>(createdOrder);
 
@@ -99,11 +99,11 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPut("{id}")]
 		[ProducesResponseType(typeof(OrderViewDto), 200)]
 		[ProducesResponseType(404)]
-		public ActionResult<OrderViewDto> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
+		public async Task<ActionResult<OrderViewDto>> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
 		{
 			var orderToUpdate = _mapper.Map<Order>(orderDto);
 
-			var updatedOrder = _orderService.Update(id, orderToUpdate);
+			var updatedOrder = await _orderService.Update(id, orderToUpdate, orderDto.BookIds);
 			if (updatedOrder == null)
 				return NotFound();
 
@@ -121,10 +121,10 @@ namespace BookStorage.WebApi.Controllers
 		[HttpDelete("{id}")]
 		[ProducesResponseType(204)]
 		[ProducesResponseType(404)]
-		public ActionResult Delete([FromRoute] Guid id)
+		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var orderToDelete = _orderService.Delete(id);
-			if (orderToDelete)
+			var orderToDelete = await _orderService.Delete(id);
+			if (!orderToDelete)
 				return NotFound();
 
 			return NoContent();

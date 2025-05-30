@@ -1,68 +1,59 @@
 using BookStorage.Application.Interfaces.Services;
 using BookStorage.Domain.Models;
+using BookStorage.Infrastructure.Interfaces;
 
 namespace BookStorage.Application.Implementations.Services
 {
 	public class OrderService : IOrderService
 	{
-		public static readonly List<Order> Orders =
-		[
-			new()
+		private readonly IOrderRepository _repository;
+
+		public OrderService(IOrderRepository repository)
+		{
+			_repository = repository;
+		}
+
+		public async Task<IEnumerable<Order>> GetAll()
+		{
+			return await _repository.GetAllAsync();
+		}
+
+		public async Task<Order?> GetById(Guid id)
+		{
+			return await _repository.GetByIdAsync(id);
+		}
+
+		public async Task<Order?> Create(Order order, List<Guid> bookIds)
+		{
+			if (bookIds == null || bookIds.Count == 0)
 			{
-				Id = Guid.NewGuid(),
-				OrderDate = new DateTime(),
-				CustomerId  = Guid.NewGuid(),
-				Customer = new Customer(),
-				Books = new List<Book>()
-			},
-			new()
-			{
-				Id = Guid.NewGuid(),
-				OrderDate = new DateTime(),
-				CustomerId  = Guid.NewGuid(),
-				Customer = new Customer(),
-				Books = new List<Book>()
+				throw new ArgumentException("Order must contain at least one book.", nameof(bookIds));
 			}
-		];
-		public IEnumerable<Order> GetAll()
-		{
-			return Orders;
+
+			return await _repository.CreateAsync(order, bookIds);
 		}
 
-		public Order? GetById(Guid id)
+		public async Task<Order?> Update(Guid id, Order order, List<Guid> bookIds)
 		{
-			var order = Orders.FirstOrDefault(a => a.Id == id);
-
-			return order;
-		}
-
-		public Order Create(Order order)
-		{
-			order.Id = Guid.NewGuid();
-
-			Orders.Add(order);
-
-			return order;
-		}
-
-		public Order? Update(Guid id, Order order)
-		{
-			var existingOrder = Orders.FirstOrDefault(a => a.Id == id);
+			var existingOrder = await _repository.GetByIdAsync(id);
 			if (existingOrder == null)
 				return null;
 
-			existingOrder.CustomerId = order.CustomerId;
-
-			return existingOrder;
+			return await _repository.UpdateAsync(id, order, bookIds);
 		}
 
-		public bool Delete(Guid id)
+		public async Task<bool> Delete(Guid id)
 		{
-			var orderToDelete = Orders.FirstOrDefault(a => a.Id == id);
+			var orderToDelete = await _repository.GetByIdAsync(id);
 			if (orderToDelete == null)
 				return false;
 
-			return Orders.Remove(orderToDelete);
+			return await _repository.DeleteAsync(id);
+		}
+
+		public Task<Order?> Create(Order order)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

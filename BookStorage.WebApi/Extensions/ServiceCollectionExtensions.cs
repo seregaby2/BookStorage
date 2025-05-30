@@ -17,6 +17,8 @@ namespace BookStorage.WebApi.Extensions
 			services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
 			services.AddScoped<IAuthorRepository, AuthorRepository>();
 			services.AddScoped<IBookRepository, BookRepository>();
+			services.AddScoped<ICustomerRepository, CustomerRepository>();
+			services.AddScoped<IOrderRepository, OrderRepository>();
 
 			return services;
 		}

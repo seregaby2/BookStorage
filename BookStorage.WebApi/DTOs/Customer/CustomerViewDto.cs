@@ -1,11 +1,11 @@
-﻿namespace BookStorage.WebApi.DTOs.Customer
+namespace BookStorage.WebApi.DTOs.Customer
 {
-    public class CustomerViewDto
-    {
-        public Guid Id { get; set; }
-        public string Email { get; set; }
-        public string Name { get; set; }
-        public string PhoneNumber { get; set; }
-        public DateTime PurchasehDate { get; set; }
-    }
+	public class CustomerViewDto
+	{
+		public Guid Id { get; set; }
+		public string Email { get; set; } = null!;
+		public string FirstName { get; set; } = null!;
+		public string PhoneNumber { get; set; } = null!;
+		public DateTime PurchasehDate { get; set; }
+	}
 }
