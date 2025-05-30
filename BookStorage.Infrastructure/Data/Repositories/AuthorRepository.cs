@@ -16,12 +16,11 @@ namespace BookStorage.Infrastructure.Data.Repositories
 		public async Task<bool> CheckIfAuthorAlreadyExistsAsync(string firstName, string lastName, DateTime birthDate)
 		{
 			var query = @"
-        SELECT 1 
-        FROM store.Authors 
-        WHERE FirstName = @FirstName AND LastName = @LastName AND BirthDate = @BirthDate";
+				SELECT 1 
+				FROM store.Authors 
+				WHERE FirstName = @FirstName AND LastName = @LastName AND BirthDate = @BirthDate";
 
 			using var connection = _dbFactory.CreateConnection();
-			await connection.OpenAsync();
 
 			var result = await connection.ExecuteScalarAsync<object?>(query, new
 			{
@@ -35,20 +34,38 @@ namespace BookStorage.Infrastructure.Data.Repositories
 
 		public async Task<IEnumerable<Author>> GetAllAsync()
 		{
-			var query = "SELECT * FROM store.Authors";
+			const string authorQuery = "SELECT * FROM store.Authors";
+			const string booksQuery = "SELECT * FROM store.Books WHERE AuthorId = @AuthorId";
 
 			using var connection = _dbFactory.CreateConnection();
 
-			return await connection.QueryAsync<Author>(query);
+			var authors = (await connection.QueryAsync<Author>(authorQuery)).ToList();
+
+			foreach (var author in authors)
+			{
+				var books = await connection.QueryAsync<Book>(booksQuery, new { AuthorId = author.Id });
+				author.Books = books.ToList();
+			}
+
+			return authors;
 		}
 
 		public async Task<Author?> GetByIdAsync(Guid id)
 		{
-			var query = "SELECT * FROM store.Authors WHERE Id = @Id";
+			const string authorQuery = "SELECT * FROM store.Authors WHERE Id = @Id";
+			const string booksQuery = "SELECT * FROM store.Books WHERE AuthorId = @AuthorId";
 
 			using var connection = _dbFactory.CreateConnection();
 
-			return await connection.QuerySingleOrDefaultAsync<Author>(query, new { Id = id });
+			var author = await connection.QuerySingleOrDefaultAsync<Author>(authorQuery, new { Id = id });
+
+			if (author == null)
+				return null;
+
+			var books = await connection.QueryAsync<Book>(booksQuery, new { AuthorId = id });
+			author.Books = books.ToList();
+
+			return author;
 		}
 
 		public async Task<Author?> CreateAsync(Author author)

@@ -5,11 +5,10 @@ namespace BookStorage.Application.Interfaces.Services
 {
 	public interface IBookService
 	{
-		IEnumerable<Book> GetAll();
-		Book? GetById(Guid id);
-		Book? Create(Book book);
-		Book? Update(Guid id, Book book);
-		bool Delete(Guid id);
-		void DeleteByAuthorId(Guid authorId);
+		Task<IEnumerable<Book>> GetAll();
+		Task<Book?> GetById(Guid id);
+		Task<Book?> Create(Book book);
+		Task<Book?> Update(Guid id, Book book);
+		Task<bool> Delete(Guid id);
 	}
 }

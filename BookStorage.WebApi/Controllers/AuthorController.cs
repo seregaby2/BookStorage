@@ -13,13 +13,11 @@ namespace BookStorage.WebApi.Controllers
 	{
 		private readonly IAuthorService _authorService;
 		private readonly IMapper _mapper;
-		private readonly IAuthorBookService _authorBookService;
 
-		public AuthorController(IAuthorService authorService, IMapper mapper, IAuthorBookService authorBookService)
+		public AuthorController(IAuthorService authorService, IMapper mapper)
 		{
 			_authorService = authorService;
 			_mapper = mapper;
-			_authorBookService = authorBookService;
 		}
 
 		/// <summary>
@@ -69,6 +67,7 @@ namespace BookStorage.WebApi.Controllers
 		///     {
 		///         "firstName": "Leo",
 		///         "lastName": "Tolstoy",
+		///         "birthDate": "2025-05-29",
 		///     }
 		/// </remarks>
 		/// <param name="authorDto">The author to create</param>
