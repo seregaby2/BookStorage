@@ -130,7 +130,7 @@ namespace BookStorage.Infrastructure.Data.Repositories
 			}
 		}
 
-		public async Task<Order?> UpdateAsync(Guid id, Order order, List<Guid>? bookIds = null)
+		public async Task<bool?> UpdateAsync(Guid id, Order order, List<Guid>? bookIds)
 		{
 			using var connection = _dbFactory.CreateConnection();
 			await connection.OpenAsync();
@@ -140,7 +140,7 @@ namespace BookStorage.Infrastructure.Data.Repositories
 			{
 				const string updateOrder = @"
                     UPDATE store.Orders
-                    SET CustomerId = @CustomerId, Status = @Status, TotalAmount = @TotalAmount
+                    SET CustomerId = @CustomerId, Status = @Status
                     WHERE Id = @Id";
 
 				var rowsAffected = await connection.ExecuteAsync(updateOrder, new
@@ -148,7 +148,6 @@ namespace BookStorage.Infrastructure.Data.Repositories
 					Id = id,
 					order.CustomerId,
 					order.Status,
-					order.TotalAmount
 				}, transaction);
 
 				if (bookIds != null)
@@ -166,7 +165,7 @@ namespace BookStorage.Infrastructure.Data.Repositories
 				}
 
 				transaction.Commit();
-				return rowsAffected > 0 ? order : null;
+				return rowsAffected > 0;
 			}
 			catch
 			{

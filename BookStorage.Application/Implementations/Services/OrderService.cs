@@ -33,7 +33,7 @@ namespace BookStorage.Application.Implementations.Services
 			return await _repository.CreateAsync(order, bookIds);
 		}
 
-		public async Task<Order?> Update(Guid id, Order order, List<Guid> bookIds)
+		public async Task<bool?> Update(Guid id, Order order, List<Guid> bookIds)
 		{
 			var existingOrder = await _repository.GetByIdAsync(id);
 			if (existingOrder == null)
@@ -49,11 +49,6 @@ namespace BookStorage.Application.Implementations.Services
 				return false;
 
 			return await _repository.DeleteAsync(id);
-		}
-
-		public Task<Order?> Create(Order order)
-		{
-			throw new NotImplementedException();
 		}
 	}
 }

@@ -97,19 +97,20 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the updated order</response>
 		/// <response code="404">If the order with the specified ID is not found</response>
 		[HttpPut("{id}")]
-		[ProducesResponseType(typeof(OrderViewDto), 200)]
+		[ProducesResponseType(200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<OrderViewDto>> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
+		public async Task<ActionResult> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
 		{
 			var orderToUpdate = _mapper.Map<Order>(orderDto);
 
 			var updatedOrder = await _orderService.Update(id, orderToUpdate, orderDto.BookIds);
-			if (updatedOrder == null)
-				return NotFound();
+			if (updatedOrder is null)
+				return NotFound("Order not found");
 
-			var updatedDto = _mapper.Map<OrderViewDto>(updatedOrder);
+			if (updatedOrder == false)
+				return BadRequest("Failed to update order");
 
-			return Ok(updatedDto);
+			return Ok("Order was updated");
 		}
 
 		/// <summary>
