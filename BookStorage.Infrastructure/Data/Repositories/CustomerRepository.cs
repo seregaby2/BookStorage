@@ -51,7 +51,7 @@ namespace BookStorage.Infrastructure.Data.Repositories
 		{
 			var query = @"
 				UPDATE store.Customers SET Email = @Email, FirstName = @FirstName, PhoneNumber = @PhoneNumber, PurchaseDate = @PuchaseDate
-				WHERE Id = id";
+				WHERE Id = @Id";
 
 			var connection = _dbFactory.CreateConnection();
 

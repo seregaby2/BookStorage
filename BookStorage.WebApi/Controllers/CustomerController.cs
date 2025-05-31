@@ -65,8 +65,9 @@ namespace BookStorage.WebApi.Controllers
 		///     POST /api/Customer
 		///     {
 		///         "Email" : "v.@gmail.com",
-		///         "Name" : "Mark",
+		///         "firstName" : "Mark",
 		///         "PhoneNumber" : "+375291111111",
+		///			"purchaseDate": "2025-05-31T15:02:11.540Z"
 		///     }
 		/// </remarks>
 		/// <param name="customerDto">The customer to create</param>

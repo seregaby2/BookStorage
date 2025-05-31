@@ -13,7 +13,6 @@ namespace BookStorage.Domain.Models
 		public decimal Price { get; set; }
 		public Guid AuthorId { get; set; }
 		public required Author Author { get; set; }
-		public Guid? OrderId { get; set; }
-		public Order? Order { get; set; }
+		public List<OrderBook> OrderBooks { get; set; } = new();
 	}
 }

@@ -1,4 +1,5 @@
 using BookStorage.Domain.Enums;
+using BookStorage.WebApi.DTOs.OrderBook;
 
 namespace BookStorage.WebApi.DTOs.Order
 {
@@ -6,6 +7,6 @@ namespace BookStorage.WebApi.DTOs.Order
 	{
 		public Guid CustomerId { get; set; }
 		public OrderStatus Status { get; set; }
-		public List<Guid> BookIds { get; set; } = new();
+		public List<CreateOrderBookDto> Books { get; set; } = new();
 	}
 }

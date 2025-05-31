@@ -23,23 +23,18 @@ namespace BookStorage.Application.Implementations.Services
 			return await _repository.GetByIdAsync(id);
 		}
 
-		public async Task<Order?> Create(Order order, List<Guid> bookIds)
+		public async Task<Order?> Create(Order order)
 		{
-			if (bookIds == null || bookIds.Count == 0)
-			{
-				throw new ArgumentException("Order must contain at least one book.", nameof(bookIds));
-			}
-
-			return await _repository.CreateAsync(order, bookIds);
+			return await _repository.CreateAsync(order);
 		}
 
-		public async Task<bool?> Update(Guid id, Order order, List<Guid> bookIds)
+		public async Task<Order?> Update(Guid id, Order order)
 		{
 			var existingOrder = await _repository.GetByIdAsync(id);
 			if (existingOrder == null)
 				return null;
 
-			return await _repository.UpdateAsync(id, order, bookIds);
+			return await _repository.UpdateAsync(id, order);
 		}
 
 		public async Task<bool> Delete(Guid id)
@@ -49,6 +44,11 @@ namespace BookStorage.Application.Implementations.Services
 				return false;
 
 			return await _repository.DeleteAsync(id);
+		}
+
+		Task<bool?> IOrderService.Update(Guid id, Order order)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

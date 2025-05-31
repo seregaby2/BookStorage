@@ -1,0 +1,55 @@
+GO
+
+CREATE TABLE Store.Authors (
+    Id UNIQUEIDENTIFIER PRIMARY KEY,
+    FirstName NVARCHAR(100) NOT NULL,
+    LastName NVARCHAR(100) NOT NULL,
+    BirthDate DATETIME2 NOT NULL
+);
+GO
+
+CREATE TABLE Store.Customers (
+    Id UNIQUEIDENTIFIER PRIMARY KEY,
+    Email NVARCHAR(150) NOT NULL,
+    FirstName NVARCHAR(100) NOT NULL,
+    PhoneNumber NVARCHAR(100) NOT NULL,
+    PurchaseDate DATETIME2 NOT NULL
+);
+GO
+
+CREATE TABLE Store.Orders (
+    Id UNIQUEIDENTIFIER PRIMARY KEY,
+    TotalAmount DECIMAL(18, 2) NOT NULL,
+    OrderDate DATETIME2 NOT NULL,
+    Status INT NOT NULL,
+    CustomerId UNIQUEIDENTIFIER NOT NULL,
+    CONSTRAINT FK_Orders_Customers FOREIGN KEY (CustomerId) REFERENCES Store.Customers(Id)
+);
+GO
+
+CREATE TABLE Store.Books (
+    Id UNIQUEIDENTIFIER PRIMARY KEY,
+    Title NVARCHAR(100) NOT NULL,
+    Genre NVARCHAR(50) NOT NULL,
+    Price DECIMAL(18, 2) NOT NULL,
+    PublishDate DATETIME2 NOT NULL,
+    AuthorId UNIQUEIDENTIFIER NOT NULL,
+    CONSTRAINT FK_Books_Authors FOREIGN KEY (AuthorId) REFERENCES Store.Authors(Id),
+);
+GO
+
+CREATE TABLE Store.OrderBooks (
+    OrderId UNIQUEIDENTIFIER NOT NULL,
+    BookId UNIQUEIDENTIFIER NOT NULL,
+    Quantity INT NOT NULL DEFAULT 1,
+    PRIMARY KEY (OrderId, BookId),
+    CONSTRAINT FK_OrderBooks_Orders FOREIGN KEY (OrderId) REFERENCES Store.Orders(Id) ON DELETE CASCADE,
+    CONSTRAINT FK_OrderBooks_Books FOREIGN KEY (BookId) REFERENCES Store.Books(Id) ON DELETE CASCADE
+);
+GO
+
+CREATE INDEX IX_Books_AuthorId ON Store.Books (AuthorId);
+CREATE INDEX IX_Orders_CustomerId ON Store.Orders (CustomerId);
+CREATE INDEX IX_OrderBooks_OrderId ON Store.OrderBooks (OrderId);
+CREATE INDEX IX_OrderBooks_BookId ON Store.OrderBooks (BookId);
+GO

@@ -6,8 +6,8 @@ namespace BookStorage.Infrastructure.Interfaces
 	{
 		Task<IEnumerable<Order>> GetAllAsync();
 		Task<Order?> GetByIdAsync(Guid id);
-		Task<Order?> CreateAsync(Order order, List<Guid> bookIds);
-		Task<bool?> UpdateAsync(Guid id, Order order, List<Guid>? bookIds);
+		Task<Order?> CreateAsync(Order order);
+		Task<Order?> UpdateAsync(Guid id, Order order);
 		Task<bool> DeleteAsync(Guid id);
 	}
 }

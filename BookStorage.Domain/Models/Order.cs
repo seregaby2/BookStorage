@@ -12,6 +12,6 @@ namespace BookStorage.Domain.Models
 		public decimal TotalAmount { get; set; }
 		public Guid CustomerId { get; set; }
 		public required Customer Customer { get; set; }
-		public required List<Book> Books { get; set; }
+		public List<OrderBook> OrderBooks { get; set; } = new();
 	}
 }

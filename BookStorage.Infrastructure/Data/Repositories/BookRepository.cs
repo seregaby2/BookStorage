@@ -62,8 +62,8 @@ namespace BookStorage.Infrastructure.Data.Repositories
 		public async Task<Book?> CreateAsync(Book book)
 		{
 			var query = @"
-				INSERT INTO store.Books (Id, Title, Genre, PublishDate, Price, AuthorId, OrderId)
-				VALUES (@Id, @Title, @Genre, @PublishDate, @Price, @AuthorId, @OrderId)";
+				INSERT INTO store.Books (Id, Title, Genre, PublishDate, Price, AuthorId)
+				VALUES (@Id, @Title, @Genre, @PublishDate, @Price, @AuthorId)";
 
 			using var connection = _dbFactory.CreateConnection();
 

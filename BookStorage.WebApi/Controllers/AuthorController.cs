@@ -67,7 +67,7 @@ namespace BookStorage.WebApi.Controllers
 		///     {
 		///         "firstName": "Leo",
 		///         "lastName": "Tolstoy",
-		///         "birthDate": "2025-05-29",
+		///         "birthDate": "2025-05-29"
 		///     }
 		/// </remarks>
 		/// <param name="authorDto">The author to create</param>

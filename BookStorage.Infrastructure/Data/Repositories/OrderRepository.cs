@@ -7,48 +7,56 @@ namespace BookStorage.Infrastructure.Data.Repositories
 	public class OrderRepository : IOrderRepository
 	{
 		private readonly IDbConnectionFactory _dbFactory;
+		private readonly IBookRepository _bookRepository;
+		private readonly ICustomerRepository _customerRepository;
 
-		public OrderRepository(IDbConnectionFactory dbFactory)
+		public OrderRepository(IDbConnectionFactory dbFactory, IBookRepository bookRepository, ICustomerRepository customerRepository)
 		{
 			_dbFactory = dbFactory;
+			_bookRepository = bookRepository;
+			_customerRepository = customerRepository;
 		}
 
 		public async Task<IEnumerable<Order>> GetAllAsync()
 		{
 			const string query = @"
-				SELECT
-					o.Id, o.OrderDate, o.Status, o.TotalAmount, o.CustomerId,
+				SELECT 
+					o.Id, o.CustomerId, o.OrderDate, o.Status, o.TotalAmount,
 					c.Id, c.Email, c.FirstName, c.PhoneNumber, c.PurchaseDate,
-					b.Id, b.Title, b.Genre, b.Price, b.PublishDate, b.AuthorId, b.OrderId
+					ob.BookId, ob.Quantity,
+					b.Id, b.Title, b.Price
 				FROM store.Orders o
-				JOIN store.Customers c ON o.CustomerId = c.Id
-				LEFT JOIN store.Books b ON o.Id = b.OrderId";
+				INNER JOIN store.Customers c ON o.CustomerId = c.Id
+				LEFT JOIN store.OrderBooks ob ON o.Id = ob.OrderId
+				LEFT JOIN store.Books b ON ob.BookId = b.Id
+				ORDER BY o.OrderDate DESC";
 
 			using var connection = _dbFactory.CreateConnection();
 
 			var orderDictionary = new Dictionary<Guid, Order>();
 
-			var result = await connection.QueryAsync<Order, Customer, Book, Order>(
+			var orders = await connection.QueryAsync<Order, Customer, OrderBook, Book, Order>(
 				query,
-				(order, customer, book) =>
+				(order, customer, orderBook, book) =>
 				{
 					if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
 					{
 						currentOrder = order;
 						currentOrder.Customer = customer;
-						currentOrder.Books = new List<Book>();
+						currentOrder.OrderBooks = new List<OrderBook>();
 						orderDictionary.Add(order.Id, currentOrder);
 					}
 
-					if (book != null && book.Id != Guid.Empty)
+					if (orderBook != null && book != null)
 					{
-						currentOrder.Books.Add(book);
+						orderBook.Book = book;
+						orderBook.Order = currentOrder;
+						currentOrder.OrderBooks.Add(orderBook);
 					}
 
 					return currentOrder;
 				},
-				splitOn: "Id,Id"
-			);
+				splitOn: "Id,BookId,Id");
 
 			return orderDictionary.Values;
 		}
@@ -56,46 +64,51 @@ namespace BookStorage.Infrastructure.Data.Repositories
 		public async Task<Order?> GetByIdAsync(Guid id)
 		{
 			const string query = @"
-                SELECT
-					o.*,
-					c.Id, c.Email, c.FirstName, c.PhoneNumber, c.PurchaseDate,
-                    b.Id, b.Title, b.Price, b.AuthorId, b.OrderId
-                FROM store.Orders o
-                JOIN store.Customers c ON o.CustomerId = c.Id
-                LEFT JOIN store.Books b ON o.Id = b.OrderId
-                WHERE o.Id = @Id";
+				SELECT o.*, c.*, ob.BookId, ob.Quantity, b.*
+				FROM store.Orders o
+				INNER JOIN store.Customers c ON o.CustomerId = c.Id
+				LEFT JOIN store.OrderBooks ob ON o.Id = ob.OrderId
+				LEFT JOIN store.Books b ON ob.BookId = b.Id
+				WHERE o.Id = @Id";
 
 			using var connection = _dbFactory.CreateConnection();
 
 			var orderDictionary = new Dictionary<Guid, Order>();
 
-			var result = await connection.QueryAsync<Order, Customer, Book, Order>(
-				query,
-				(order, customer, book) =>
+			var orders = await connection.QueryAsync<Order, Customer, Guid?, int?, Book, Order>(
+		query,
+		(order, customer, bookId, quantity, book) =>
+		{
+			if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
+			{
+				currentOrder = order;
+				currentOrder.Customer = customer;
+				currentOrder.OrderBooks = new List<OrderBook>();
+				orderDictionary.Add(order.Id, currentOrder);
+			}
+
+			if (bookId.HasValue && book != null)
+			{
+				currentOrder.OrderBooks.Add(new OrderBook
 				{
-					if (!orderDictionary.TryGetValue(order.Id, out var currentOrder))
-					{
-						currentOrder = order;
-						currentOrder.Customer = customer;
-						currentOrder.Books = new List<Book>();
-						orderDictionary.Add(order.Id, currentOrder);
-					}
+					OrderId = order.Id,
+					BookId = bookId.Value,
+					Quantity = quantity ?? 1,
+					Book = book,
+					Order = currentOrder
+				});
+			}
 
-					if (book != null && book.Id != Guid.Empty)
-					{
-						currentOrder.Books.Add(book);
-					}
-
-					return currentOrder;
-				},
-				new { Id = id },
-				splitOn: "Id,Id"
-			);
+			return currentOrder;
+		},
+		new { Id = id },
+		splitOn: "Id,BookId,Quantity,Id"
+	);
 
 			return orderDictionary.Values.FirstOrDefault();
 		}
 
-		public async Task<Order?> CreateAsync(Order order, List<Guid> bookIds)
+		public async Task<Order?> CreateAsync(Order order)
 		{
 			using var connection = _dbFactory.CreateConnection();
 			await connection.OpenAsync();
@@ -106,31 +119,65 @@ namespace BookStorage.Infrastructure.Data.Repositories
 				order.Id = Guid.NewGuid();
 				order.OrderDate = DateTime.UtcNow;
 
+				foreach (var ob in order.OrderBooks)
+				{
+					var book = await _bookRepository.GetByIdAsync(ob.BookId);
+					ob.Book = book;
+				}
+
+				order.TotalAmount = order.OrderBooks.Sum(ob => ob.Quantity * (ob.Book?.Price ?? 0));
+
 				const string insertOrder = @"
                     INSERT INTO store.Orders (Id, CustomerId, OrderDate, Status, TotalAmount)
                     VALUES (@Id, @CustomerId, @OrderDate, @Status, @TotalAmount)";
 
-				await connection.ExecuteAsync(insertOrder, order, transaction);
+				var customerExists = await _customerRepository.GetByIdAsync(order.CustomerId);
+				if (customerExists == null)
+					return null;
+
+				foreach (var ob in order.OrderBooks)
+				{
+					var bookExists = await _bookRepository.GetByIdAsync(ob.BookId);
+					if (bookExists == null)
+						return null;
+				}
+
+				await connection.ExecuteAsync(insertOrder, new
+				{
+					order.Id,
+					order.OrderDate,
+					Status = (int)order.Status,
+					order.TotalAmount,
+					order.CustomerId
+				}, transaction);
 
 				const string updateBooks = @"
-                    UPDATE store.Books SET OrderId = @OrderId WHERE Id = @BookId";
+					INSERT INTO store.OrderBooks (OrderId, BookId, Quantity)
+					VALUES (@OrderId, @BookId, @Quantity);";
 
-				foreach (var bookId in bookIds)
+				foreach (var ob in order.OrderBooks)
 				{
-					await connection.ExecuteAsync(updateBooks, new { OrderId = order.Id, BookId = bookId }, transaction);
+					await connection.ExecuteAsync(updateBooks, new
+					{
+						OrderId = order.Id,
+						ob.BookId,
+						ob.Quantity
+					}, transaction);
 				}
 
 				transaction.Commit();
+
 				return order;
 			}
-			catch
+			catch (Exception ex)
 			{
 				transaction.Rollback();
+				Console.WriteLine("Error when creating an order: " + ex.Message);
 				throw;
 			}
 		}
 
-		public async Task<bool?> UpdateAsync(Guid id, Order order, List<Guid>? bookIds)
+		public async Task<Order?> UpdateAsync(Guid id, Order order)
 		{
 			using var connection = _dbFactory.CreateConnection();
 			await connection.OpenAsync();
@@ -138,38 +185,74 @@ namespace BookStorage.Infrastructure.Data.Repositories
 
 			try
 			{
-				const string updateOrder = @"
-                    UPDATE store.Orders
-                    SET CustomerId = @CustomerId, Status = @Status
-                    WHERE Id = @Id";
+				var existingOrder = await connection.QuerySingleOrDefaultAsync<Order>(
+					"SELECT * FROM store.Orders WHERE Id = @Id",
+					new { Id = id }, transaction);
 
-				var rowsAffected = await connection.ExecuteAsync(updateOrder, new
+				if (existingOrder == null)
+					return null;
+
+				var updateOrderSql = @"
+					UPDATE store.Orders SET 
+					    OrderDate = @OrderDate,
+					    Status = @Status,
+					    TotalAmount = @TotalAmount,
+					    CustomerId = @CustomerId
+					WHERE Id = @Id";
+
+
+				foreach (var ob in order.OrderBooks)
 				{
-					Id = id,
-					order.CustomerId,
-					order.Status,
-				}, transaction);
-
-				if (bookIds != null)
-				{
-					const string clearBooks = @"
-                        UPDATE store.Books SET OrderId = NULL WHERE OrderId = @OrderId";
-					await connection.ExecuteAsync(clearBooks, new { OrderId = id }, transaction);
-
-					const string updateBooks = @"
-                        UPDATE store.Books SET OrderId = @OrderId WHERE Id = @BookId";
-					foreach (var bookId in bookIds)
-					{
-						await connection.ExecuteAsync(updateBooks, new { OrderId = id, BookId = bookId }, transaction);
-					}
+					var book = await _bookRepository.GetByIdAsync(ob.BookId);
+					ob.Book = book;
 				}
 
-				transaction.Commit();
-				return rowsAffected > 0;
+				order.TotalAmount = order.OrderBooks.Sum(ob => ob.Quantity * ob.Book.Price);
+
+				var customerExists = await _customerRepository.GetByIdAsync(order.CustomerId);
+				if (customerExists == null)
+					return null;
+
+				foreach (var ob in order.OrderBooks)
+				{
+					var bookExists = await _bookRepository.GetByIdAsync(ob.BookId);
+					if (bookExists == null)
+						return null;
+				}
+
+				await connection.ExecuteAsync(updateOrderSql, new
+				{
+					Id = id,
+					order.OrderDate,
+					Status = (int)order.Status,
+					order.TotalAmount,
+					order.CustomerId
+				}, transaction);
+
+				await connection.ExecuteAsync("DELETE FROM store.OrderBooks WHERE OrderId = @OrderId", new { OrderId = id }, transaction);
+
+				var insertOrderBookSql = @"
+					INSERT INTO store.OrderBooks (OrderId, BookId, Quantity)
+					VALUES (@OrderId, @BookId, @Quantity)";
+
+				foreach (var ob in order.OrderBooks)
+				{
+					await connection.ExecuteAsync(insertOrderBookSql, new
+					{
+						OrderId = id,
+						BookId = ob.BookId,
+						Quantity = ob.Quantity
+					}, transaction);
+				}
+
+				await transaction.CommitAsync();
+
+				order.Id = id;
+				return order;
 			}
 			catch
 			{
-				transaction.Rollback();
+				await transaction.RollbackAsync();
 				throw;
 			}
 		}
@@ -182,21 +265,23 @@ namespace BookStorage.Infrastructure.Data.Repositories
 
 			try
 			{
-				const string detachBooks = @"
-                    UPDATE store.Books SET OrderId = NULL WHERE OrderId = @OrderId";
+				var existingOrder = await connection.QuerySingleOrDefaultAsync<Order>(
+					"SELECT * FROM store.Orders WHERE Id = @Id", new { Id = id }, transaction);
 
-				await connection.ExecuteAsync(detachBooks, new { OrderId = id }, transaction);
+				if (existingOrder == null)
+					return false;
 
-				const string deleteOrder = "DELETE FROM store.Orders WHERE Id = @Id";
+				await connection.ExecuteAsync("DELETE FROM store.OrderBooks WHERE OrderId = @OrderId", new { OrderId = id }, transaction);
 
-				var rowsAffected = await connection.ExecuteAsync(deleteOrder, new { Id = id }, transaction);
+				var affectedRows = await connection.ExecuteAsync("DELETE FROM store.Orders WHERE Id = @Id", new { Id = id }, transaction);
 
-				transaction.Commit();
-				return rowsAffected > 0;
+				await transaction.CommitAsync();
+
+				return affectedRows > 0;
 			}
 			catch
 			{
-				transaction.Rollback();
+				await transaction.RollbackAsync();
 				throw;
 			}
 		}

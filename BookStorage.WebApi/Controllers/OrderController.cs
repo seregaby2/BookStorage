@@ -64,8 +64,15 @@ namespace BookStorage.WebApi.Controllers
 		///
 		///     POST /api/Order
 		///     {
-		///         "TotalAmount"  : "500",
-		///     }
+		///		"customerId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+		///		"status": "Pending",
+		///		"books": [
+		///			{
+		///			"bookId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+		///			"quantity": 1
+		///			}
+		///				]
+		///		}
 		/// </remarks>
 		/// <param name="orderDto">The order to create</param>
 		/// <returns>The newly created order</returns>
@@ -81,7 +88,10 @@ namespace BookStorage.WebApi.Controllers
 
 			var order = _mapper.Map<Order>(orderDto);
 
-			var createdOrder = await _orderService.Create(order, orderDto.BookIds);
+			var createdOrder = await _orderService.Create(order);
+
+			if (createdOrder == null)
+				return BadRequest("CustomerId or BookId are not found");
 
 			var createdDto = _mapper.Map<OrderViewDto>(createdOrder);
 
@@ -99,13 +109,13 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPut("{id}")]
 		[ProducesResponseType(200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
+		public async Task<ActionResult<Order>> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
 		{
 			var orderToUpdate = _mapper.Map<Order>(orderDto);
 
-			var updatedOrder = await _orderService.Update(id, orderToUpdate, orderDto.BookIds);
+			var updatedOrder = await _orderService.Update(id, orderToUpdate);
 			if (updatedOrder is null)
-				return NotFound("Order not found");
+				return NotFound("CustomerId or BookId are not found");
 
 			if (updatedOrder == false)
 				return BadRequest("Failed to update order");
