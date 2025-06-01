@@ -50,7 +50,7 @@ namespace BookStorage.Infrastructure.Data.Repositories
 		public async Task<Customer?> UpdateAsync(Guid id, Customer customer)
 		{
 			var query = @"
-				UPDATE store.Customers SET Email = @Email, FirstName = @FirstName, PhoneNumber = @PhoneNumber, PurchaseDate = @PuchaseDate
+				UPDATE store.Customers SET Email = @Email, FirstName = @FirstName, PhoneNumber = @PhoneNumber, PurchaseDate = @PurchaseDate
 				WHERE Id = @Id";
 
 			var connection = _dbFactory.CreateConnection();

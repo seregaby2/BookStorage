@@ -25,7 +25,10 @@ namespace BookStorage.WebApi.Mapping
 
 			CreateMap<Customer, CustomerViewDto>();
 
-			CreateMap<UpdateOrderDto, Order>();
+			CreateMap<UpdateOrderBookDto, OrderBook>();
+
+			CreateMap<UpdateOrderDto, Order>()
+				.ForMember(dest => dest.OrderBooks, opt => opt.MapFrom(src => src.Books));
 
 			CreateMap<CreateOrderBookDto, OrderBook>();
 

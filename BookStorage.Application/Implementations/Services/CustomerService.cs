@@ -6,50 +6,51 @@ namespace BookStorage.Application.Implementations.Services
 {
 	public class CustomerService : ICustomerService
 	{
-		private readonly ICustomerRepository _repository;
+		private readonly ICustomerRepository _customerRepository;
 
-		public CustomerService(ICustomerRepository repository)
+		public CustomerService(ICustomerRepository customerRepository)
 		{
-			_repository = repository;
+			_customerRepository = customerRepository;
 		}
 
 		public async Task<IEnumerable<Customer>> GetAll()
 		{
-			return await _repository.GetAllAsync();
+			return await _customerRepository.GetAllAsync();
 		}
 
 		public async Task<Customer?> GetById(Guid id)
 		{
-			return await _repository.GetByIdAsync(id);
+			return await _customerRepository.GetByIdAsync(id);
 		}
 
 		public async Task<Customer?> Create(Customer customer)
 		{
-			//bool exists = Customers.Any(a =>
-			//    string.Equals(a.Email, customer.Email, StringComparison.OrdinalIgnoreCase));
-			//if (exists)
-			//    return null;
+			var customers = await _customerRepository.GetAllAsync();
 
+			bool exists = customers.Any(a =>
+				string.Equals(a.Email, customer.Email, StringComparison.OrdinalIgnoreCase));
+			if (exists)
+				return null;
 
-			return await _repository.CreateAsync(customer);
+			return await _customerRepository.CreateAsync(customer);
 		}
 
 		public async Task<Customer?> Update(Guid id, Customer customer)
 		{
-			//var existingCustomer = Customers.FirstOrDefault(a => a.Id == id);
-			//if (existingCustomer == null)
-			//	return null;
+			var customerToDelete = _customerRepository.GetByIdAsync(id);
+			if (customerToDelete == null)
+				return null;
 
-			return await _repository.UpdateAsync(id, customer);
+			return await _customerRepository.UpdateAsync(id, customer);
 		}
 
 		public async Task<bool> Delete(Guid id)
 		{
-			//var customerToDelete = Customers.FirstOrDefault(a => a.Id == id);
-			//if (customerToDelete == null)
-			//	return false;
+			var customerToDelete = _customerRepository.GetByIdAsync(id);
+			if (customerToDelete == null)
+				return false;
 
-			return await _repository.DeleteAsync(id);
+			return await _customerRepository.DeleteAsync(id);
 		}
 	}
 }

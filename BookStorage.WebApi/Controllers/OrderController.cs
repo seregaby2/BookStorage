@@ -115,10 +115,7 @@ namespace BookStorage.WebApi.Controllers
 
 			var updatedOrder = await _orderService.Update(id, orderToUpdate);
 			if (updatedOrder is null)
-				return NotFound("CustomerId or BookId are not found");
-
-			if (updatedOrder == false)
-				return BadRequest("Failed to update order");
+				return NotFound("Order or CustomerId or BookId are not found");
 
 			return Ok("Order was updated");
 		}

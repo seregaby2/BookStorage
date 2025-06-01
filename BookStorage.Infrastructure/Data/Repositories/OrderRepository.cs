@@ -7,14 +7,10 @@ namespace BookStorage.Infrastructure.Data.Repositories
 	public class OrderRepository : IOrderRepository
 	{
 		private readonly IDbConnectionFactory _dbFactory;
-		private readonly IBookRepository _bookRepository;
-		private readonly ICustomerRepository _customerRepository;
 
-		public OrderRepository(IDbConnectionFactory dbFactory, IBookRepository bookRepository, ICustomerRepository customerRepository)
+		public OrderRepository(IDbConnectionFactory dbFactory)
 		{
 			_dbFactory = dbFactory;
-			_bookRepository = bookRepository;
-			_customerRepository = customerRepository;
 		}
 
 		public async Task<IEnumerable<Order>> GetAllAsync()
@@ -119,28 +115,9 @@ namespace BookStorage.Infrastructure.Data.Repositories
 				order.Id = Guid.NewGuid();
 				order.OrderDate = DateTime.UtcNow;
 
-				foreach (var ob in order.OrderBooks)
-				{
-					var book = await _bookRepository.GetByIdAsync(ob.BookId);
-					ob.Book = book;
-				}
-
-				order.TotalAmount = order.OrderBooks.Sum(ob => ob.Quantity * (ob.Book?.Price ?? 0));
-
 				const string insertOrder = @"
                     INSERT INTO store.Orders (Id, CustomerId, OrderDate, Status, TotalAmount)
                     VALUES (@Id, @CustomerId, @OrderDate, @Status, @TotalAmount)";
-
-				var customerExists = await _customerRepository.GetByIdAsync(order.CustomerId);
-				if (customerExists == null)
-					return null;
-
-				foreach (var ob in order.OrderBooks)
-				{
-					var bookExists = await _bookRepository.GetByIdAsync(ob.BookId);
-					if (bookExists == null)
-						return null;
-				}
 
 				await connection.ExecuteAsync(insertOrder, new
 				{
@@ -194,31 +171,10 @@ namespace BookStorage.Infrastructure.Data.Repositories
 
 				var updateOrderSql = @"
 					UPDATE store.Orders SET 
-					    OrderDate = @OrderDate,
 					    Status = @Status,
 					    TotalAmount = @TotalAmount,
 					    CustomerId = @CustomerId
 					WHERE Id = @Id";
-
-
-				foreach (var ob in order.OrderBooks)
-				{
-					var book = await _bookRepository.GetByIdAsync(ob.BookId);
-					ob.Book = book;
-				}
-
-				order.TotalAmount = order.OrderBooks.Sum(ob => ob.Quantity * ob.Book.Price);
-
-				var customerExists = await _customerRepository.GetByIdAsync(order.CustomerId);
-				if (customerExists == null)
-					return null;
-
-				foreach (var ob in order.OrderBooks)
-				{
-					var bookExists = await _bookRepository.GetByIdAsync(ob.BookId);
-					if (bookExists == null)
-						return null;
-				}
 
 				await connection.ExecuteAsync(updateOrderSql, new
 				{
