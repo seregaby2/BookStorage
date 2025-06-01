@@ -1,10 +1,10 @@
- ?? BookStorage — Online Bookstore
+BookStorage — Online Bookstore
 
 **BookStorage** is a web application for managing an online bookstore with the ability to add (get, update, delete) authors, books, customers, and place orders.
 
 ---
 
-## ?? Features
+## Features
 
 -  CRUD operations for books and authors  
 -  Customer management  
@@ -18,7 +18,7 @@
 
 ---
 
-## ?? Technologies
+## Technologies
 
 - [.NET 8]
 - ASP.NET Core Web API  
@@ -29,27 +29,28 @@
 
 ---
 
-## ?? Architecture Overview
+## Architecture Overview
 BookStorage.sln
-??? BookStorage.WebApi # Web API (Controllers, DTOs, AutoMapper)
-??? BookStorage.Application # Interfaces, business logic, services
-??? BookStorage.Infrastructure # Dapper repositories and DB interaction
-??? BookStorage.Domain # Entities and enums
+ - BookStorage.WebApi # `Web API (Controllers, DTOs, AutoMapper)`
+ - BookStorage.Application # `Interfaces, business logic, services`
+ - BookStorage.Infrastructure # `Dapper repositories and DB interaction`
+ - BookStorage.Domain # `Entities and enums`
 
 ---
 
-## ?? How to Run
+## How to Run
 
 1. Open the solution in Visual Studio  
 2. Set `BookStorage.WebApi` as the startup project  
 3. Configure connection string in `appsettings.json`:
-
-"ConnectionStrings": {
+4. `"ConnectionStrings": {
   "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=BookStorage;Trusted_Connection=True;TrustServerCertificate=True;"
-}
+};`
+5. Make sure the database exists and tables are created (example my scheme.sql `BookStorage.Infrastructure/Db/CreateSchemeVersion3.sql`);
+6. Run the application via IIS Express (F5)
+7. Open Swagger UI in browser at https://localhost:44370/swagger
 
-Make sure the database exists and tables are created (example my scheme.sql BookStorage.Infrastructure/Db/CreateSchemeVersion3.sql)
 
-Run the application via IIS Express (F5)
 
-Open Swagger UI in browser at https://localhost:44370/swagger
+
+
