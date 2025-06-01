@@ -1,4 +1,5 @@
-using BookStorage.WebApi.Extensions;
+using BookStorage.Application.Extensions;
+using BookStorage.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using System.Text.Json.Serialization;
@@ -13,6 +14,7 @@ builder.Services.AddControllers()
 	});
 
 builder.Services.AddApplicationServices();
+builder.Services.AddApplicationRepository();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAutoMapper(typeof(Program));

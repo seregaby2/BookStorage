@@ -1,10 +1,9 @@
 using BookStorage.Application.Implementations.Services;
 using BookStorage.Application.Interfaces.Services;
-using BookStorage.Infrastructure.Data;
-using BookStorage.Infrastructure.Data.Repositories;
-using BookStorage.Infrastructure.Interfaces;
 
-namespace BookStorage.WebApi.Extensions
+using Microsoft.Extensions.DependencyInjection;
+
+namespace BookStorage.Application.Extensions
 {
 	public static class ServiceCollectionExtensions
 	{
@@ -14,11 +13,6 @@ namespace BookStorage.WebApi.Extensions
 			services.AddScoped<IBookService, BookService>();
 			services.AddScoped<ICustomerService, CustomerService>();
 			services.AddScoped<IOrderService, OrderService>();
-			services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
-			services.AddScoped<IAuthorRepository, AuthorRepository>();
-			services.AddScoped<IBookRepository, BookRepository>();
-			services.AddScoped<ICustomerRepository, CustomerRepository>();
-			services.AddScoped<IOrderRepository, OrderRepository>();
 
 			return services;
 		}
