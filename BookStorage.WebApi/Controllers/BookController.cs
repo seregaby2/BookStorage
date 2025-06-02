@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
 {
+	[ApiVersion("1.0")]
 	[ApiController]
-	[Route("api/[controller]")]
+	[Route("api/v{version:apiVersion}/[controller]")]
 	public class BookController : ControllerBase
 	{
 		private readonly IMapper _mapper;
@@ -26,9 +27,9 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the list of books.</response>
 		[HttpGet]
 		[ProducesResponseType(typeof(IEnumerable<BookViewDto>), 200)]
-		public ActionResult<IEnumerable<BookViewDto>> GetAll()
+		public async Task<ActionResult<IEnumerable<BookViewDto>>> GetAll()
 		{
-			var books = _bookService.GetAll();
+			var books = await _bookService.GetAll();
 
 			var booksDto = _mapper.Map<List<BookViewDto>>(books);
 
@@ -45,9 +46,9 @@ namespace BookStorage.WebApi.Controllers
 		[HttpGet("{id}")]
 		[ProducesResponseType(typeof(BookViewDto), 200)]
 		[ProducesResponseType(404)]
-		public ActionResult<BookViewDto> GetById([FromRoute] Guid id)
+		public async Task<ActionResult<BookViewDto>> GetById([FromRoute] Guid id)
 		{
-			var book = _bookService.GetById(id);
+			var book = await _bookService.GetById(id);
 			if (book == null)
 				return NotFound();
 
@@ -64,10 +65,11 @@ namespace BookStorage.WebApi.Controllers
 		///
 		///     POST /api/Book
 		///     {
-		///        "Title" : "War and Peace",
-		///        "Genre" : "Novel",
-		///        "Price" : "150",
-		///     }
+		///			"title": "White Fang",
+		///			"genre": "Adventure",
+		///			"price": 50,
+		///			"authorId": "31ab0d00-55f7-447a-967e-1d009db93b02"
+		///		}
 		/// </remarks>
 		/// <param name="bookDto">The book to create</param>
 		/// <returns>The newly created book</returns>
@@ -76,14 +78,14 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPost]
 		[ProducesResponseType(typeof(BookViewDto), 201)]
 		[ProducesResponseType(400)]
-		public ActionResult<BookViewDto> CreateAsync([FromBody] CreateBookDto bookDto)
+		public async Task<ActionResult<BookViewDto>> CreateAsync([FromBody] CreateBookDto bookDto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
 			var book = _mapper.Map<Book>(bookDto);
 
-			var createdBook = _bookService.Create(book);
+			var createdBook = await _bookService.Create(book);
 			if (createdBook == null)
 				return NotFound($"Author was not found.");
 
@@ -103,11 +105,11 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPut("{id}")]
 		[ProducesResponseType(typeof(BookViewDto), 200)]
 		[ProducesResponseType(404)]
-		public ActionResult<BookViewDto> UpdateAsync([FromRoute] Guid id, [FromBody] UpdateBookDto bookDto)
+		public async Task<ActionResult<BookViewDto>> UpdateAsync([FromRoute] Guid id, [FromBody] UpdateBookDto bookDto)
 		{
 			var bookToUpdate = _mapper.Map<Book>(bookDto);
 
-			var updatedBook = _bookService.Update(id, bookToUpdate);
+			var updatedBook = await _bookService.Update(id, bookToUpdate);
 			if (updatedBook == null)
 				return BadRequest($"Author or book were not found.");
 
@@ -125,10 +127,10 @@ namespace BookStorage.WebApi.Controllers
 		[HttpDelete("{id}")]
 		[ProducesResponseType(204)]
 		[ProducesResponseType(404)]
-		public ActionResult Delete([FromRoute] Guid id)
+		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var bookToDelete = _bookService.Delete(id);
-			if (bookToDelete)
+			var bookToDelete = await _bookService.Delete(id);
+			if (!bookToDelete)
 				return NotFound();
 
 			return NoContent();

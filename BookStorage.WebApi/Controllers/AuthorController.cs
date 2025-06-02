@@ -6,19 +6,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
 {
+	[ApiVersion("1.0")]
 	[ApiController]
-	[Route("api/[controller]")]
+	[Route("api/v{version:apiVersion}/[controller]")]
 	public class AuthorController : ControllerBase
 	{
 		private readonly IAuthorService _authorService;
 		private readonly IMapper _mapper;
-		private readonly IAuthorBookService _authorBookService;
 
-		public AuthorController(IAuthorService authorService, IMapper mapper, IAuthorBookService authorBookService)
+		public AuthorController(IAuthorService authorService, IMapper mapper)
 		{
 			_authorService = authorService;
 			_mapper = mapper;
-			_authorBookService = authorBookService;
 		}
 
 		/// <summary>
@@ -28,9 +27,9 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the list of authors.</response>
 		[HttpGet]
 		[ProducesResponseType(typeof(IEnumerable<AuthorViewDto>), 200)]
-		public ActionResult<IEnumerable<AuthorViewDto>> GetAll()
+		public async Task<ActionResult<IEnumerable<AuthorViewDto>>> GetAll()
 		{
-			var authors = _authorService.GetAll();
+			var authors = await _authorService.GetAll();
 
 			var authorsDto = _mapper.Map<List<AuthorViewDto>>(authors);
 
@@ -47,9 +46,9 @@ namespace BookStorage.WebApi.Controllers
 		[HttpGet("{id}")]
 		[ProducesResponseType(typeof(AuthorViewDto), 200)]
 		[ProducesResponseType(404)]
-		public ActionResult<AuthorViewDto> GetById([FromRoute] Guid id)
+		public async Task<ActionResult<AuthorViewDto>> GetById([FromRoute] Guid id)
 		{
-			var author = _authorService.GetById(id);
+			var author = await _authorService.GetById(id);
 			if (author == null)
 				return NotFound();
 
@@ -68,6 +67,7 @@ namespace BookStorage.WebApi.Controllers
 		///     {
 		///         "firstName": "Leo",
 		///         "lastName": "Tolstoy",
+		///         "birthDate": "2025-05-29"
 		///     }
 		/// </remarks>
 		/// <param name="authorDto">The author to create</param>
@@ -77,14 +77,14 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPost]
 		[ProducesResponseType(typeof(AuthorViewDto), 201)]
 		[ProducesResponseType(400)]
-		public ActionResult<AuthorViewDto> Create([FromBody] CreateAuthorDto authorDto)
+		public async Task<ActionResult<AuthorViewDto>> Create([FromBody] CreateAuthorDto authorDto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
 			var author = _mapper.Map<Author>(authorDto);
 
-			var createdAuthor = _authorService.Create(author);
+			var createdAuthor = await _authorService.Create(author);
 			if (createdAuthor == null)
 				return BadRequest("Author with the same name already exists.");
 
@@ -104,11 +104,11 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPut("{id}")]
 		[ProducesResponseType(typeof(AuthorViewDto), 200)]
 		[ProducesResponseType(404)]
-		public ActionResult<AuthorViewDto> Update([FromRoute] Guid id, [FromBody] UpdateAuthorDto authorDto)
+		public async Task<ActionResult<AuthorViewDto>> Update([FromRoute] Guid id, [FromBody] UpdateAuthorDto authorDto)
 		{
 			var authorToUpdate = _mapper.Map<Author>(authorDto);
 
-			var updatedAuthor = _authorService.Update(id, authorToUpdate);
+			var updatedAuthor = await _authorService.Update(id, authorToUpdate);
 			if (updatedAuthor == null)
 				return NotFound();
 
@@ -126,9 +126,9 @@ namespace BookStorage.WebApi.Controllers
 		[HttpDelete("{id}")]
 		[ProducesResponseType(204)]
 		[ProducesResponseType(404)]
-		public ActionResult Delete([FromRoute] Guid id)
+		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var isAuthorAndBooksDelete = _authorBookService.DeleteAuthorAndBooks(id);
+			var isAuthorAndBooksDelete = await _authorService.Delete(id);
 			if (!isAuthorAndBooksDelete)
 				return NotFound();
 

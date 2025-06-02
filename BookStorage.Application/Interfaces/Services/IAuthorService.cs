@@ -2,12 +2,12 @@ using BookStorage.Domain.Models;
 
 namespace BookStorage.Application.Interfaces.Services
 {
-    public interface IAuthorService
-    {
-        IEnumerable<Author> GetAll();
-        Author? GetById(Guid id);
-        Author? Create(Author author);
-        Author? Update(Guid id, Author author);
-        bool Delete(Guid id);
-    }
+	public interface IAuthorService
+	{
+		Task<IEnumerable<Author>> GetAll();
+		Task<Author?> GetById(Guid id);
+		Task<Author?> Create(Author author);
+		Task<Author?> Update(Guid id, Author author);
+		Task<bool> Delete(Guid id);
+	}
 }

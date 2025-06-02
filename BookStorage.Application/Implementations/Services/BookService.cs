@@ -1,96 +1,62 @@
 using BookStorage.Application.Interfaces.Services;
-using BookStorage.Domain.Enums;
 using BookStorage.Domain.Models;
+using BookStorage.Infrastructure.Interfaces;
 
 namespace BookStorage.Application.Implementations.Services
 {
 	public class BookService : IBookService
 	{
-		private readonly IAuthorService _authorService;
-		private static readonly List<Book> Books =
-		[
-			new()
-			{
-				Id = Guid.NewGuid(),
-				Title = "White Fang",
-				Genre = BookGenre.Adventure,
-				Price = 100,
-				PublishDate = new DateTime(1906,10,1),
-				Author = new Author(),
-				AuthorID = Guid.NewGuid()
-			},
-			new()
-			{
-				Id = Guid.NewGuid(),
-				Title = "War and Peace",
-				Genre = BookGenre.Novel,
-				Price = 150,
-				PublishDate = new DateTime(1869,12,1),
-				Author = new Author(),
-				AuthorID = Guid.NewGuid()
-			}
-		];
+		private readonly IBookRepository _bookRepository;
+		private readonly IAuthorRepository _authorRepository;
 
-		public BookService(IAuthorService authorService)
+
+		public BookService(IBookRepository bookRepository, IAuthorRepository authorRepository)
 		{
-			_authorService = authorService;
+			_bookRepository = bookRepository;
+			_authorRepository = authorRepository;
 		}
 
-		public IEnumerable<Book> GetAll()
+		public async Task<IEnumerable<Book>> GetAll()
 		{
-			return Books;
+			return await _bookRepository.GetAllAsync();
 		}
 
-		public Book? GetById(Guid id)
+		public async Task<Book?> GetById(Guid id)
 		{
-			var book = Books.FirstOrDefault(a => a.Id == id);
-
-			return book;
+			return await _bookRepository.GetByIdAsync(id);
 		}
 
-		public Book? Create(Book book)
+		public async Task<Book?> Create(Book book)
 		{
-			var author = _authorService.GetById(book.AuthorID);
+			var author = _authorRepository.GetByIdAsync(book.AuthorId);
 			if (author == null)
 				return null;
 
-			book.Id = Guid.NewGuid();
-
-			Books.Add(book);
-
-			return book;
+			return await _bookRepository.CreateAsync(book);
 		}
 
-		public Book? Update(Guid id, Book book)
+		public async Task<Book?> Update(Guid id, Book book)
 		{
-			var author = _authorService.GetById(book.AuthorID);
+			var author = _authorRepository.GetByIdAsync(book.AuthorId);
 			if (author == null)
 				return null;
 
-			var existingBook = Books.FirstOrDefault(a => a.Id == id);
+			var existingBook = await _bookRepository.GetByIdAsync(id);
 			if (existingBook == null)
 				return null;
 
-			existingBook.Title = book.Title;
-			existingBook.Price = book.Price;
-			existingBook.Genre = book.Genre;
 
-			return existingBook;
+			return await _bookRepository.UpdateAsync(id, book);
 		}
 
-		public bool Delete(Guid id)
+		public async Task<bool> Delete(Guid id)
 		{
-			var bookToDelete = Books.FirstOrDefault(a => a.Id == id);
-			if (bookToDelete == null)
+			var existingBook = await _bookRepository.GetByIdAsync(id);
+			if (existingBook == null)
 				return false;
 
-			return Books.Remove(bookToDelete);
+			return await _bookRepository.DeleteAsync(id);
 		}
 
-		public void DeleteByAuthorId(Guid authorId)
-		{
-			Books.RemoveAll(book => book.AuthorID == authorId);
-
-		}
 	}
 }

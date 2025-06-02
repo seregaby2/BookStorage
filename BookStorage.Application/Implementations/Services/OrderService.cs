@@ -1,68 +1,90 @@
 using BookStorage.Application.Interfaces.Services;
 using BookStorage.Domain.Models;
+using BookStorage.Infrastructure.Interfaces;
 
 namespace BookStorage.Application.Implementations.Services
 {
 	public class OrderService : IOrderService
 	{
-		public static readonly List<Order> Orders =
-		[
-			new()
+		private readonly IOrderRepository _orderRepository;
+		private readonly IBookRepository _bookRepository;
+		private readonly ICustomerRepository _customerRepository;
+
+		public OrderService(IOrderRepository orderRepository, IBookRepository bookRepository, ICustomerRepository customerRepository)
+		{
+			_orderRepository = orderRepository;
+			_bookRepository = bookRepository;
+			_customerRepository = customerRepository;
+		}
+
+		public async Task<IEnumerable<Order>> GetAll()
+		{
+			return await _orderRepository.GetAllAsync();
+		}
+
+		public async Task<Order?> GetById(Guid id)
+		{
+			return await _orderRepository.GetByIdAsync(id);
+		}
+
+		public async Task<Order?> Create(Order order)
+		{
+			var customerExists = await _customerRepository.GetByIdAsync(order.CustomerId);
+			if (customerExists == null)
+				return null;
+
+			foreach (var ob in order.OrderBooks)
 			{
-				Id = Guid.NewGuid(),
-				OrderDate = new DateTime(),
-				CustomerId  = Guid.NewGuid(),
-				Customer = new Customer(),
-				Books = new List<Book>()
-			},
-			new()
-			{
-				Id = Guid.NewGuid(),
-				OrderDate = new DateTime(),
-				CustomerId  = Guid.NewGuid(),
-				Customer = new Customer(),
-				Books = new List<Book>()
+				var bookExists = await _bookRepository.GetByIdAsync(ob.BookId);
+				if (bookExists == null)
+					return null;
 			}
-		];
-		public IEnumerable<Order> GetAll()
-		{
-			return Orders;
+
+			await CountTotalAmount(order);
+
+			return await _orderRepository.CreateAsync(order);
 		}
 
-		public Order? GetById(Guid id)
+		public async Task<Order?> Update(Guid id, Order order)
 		{
-			var order = Orders.FirstOrDefault(a => a.Id == id);
-
-			return order;
-		}
-
-		public Order Create(Order order)
-		{
-			order.Id = Guid.NewGuid();
-
-			Orders.Add(order);
-
-			return order;
-		}
-
-		public Order? Update(Guid id, Order order)
-		{
-			var existingOrder = Orders.FirstOrDefault(a => a.Id == id);
+			var existingOrder = await _orderRepository.GetByIdAsync(id);
 			if (existingOrder == null)
 				return null;
 
-			existingOrder.CustomerId = order.CustomerId;
+			var customerExists = await _customerRepository.GetByIdAsync(order.CustomerId);
+			if (customerExists == null)
+				return null;
 
-			return existingOrder;
+			foreach (var ob in order.OrderBooks)
+			{
+				var bookExists = await _bookRepository.GetByIdAsync(ob.BookId);
+				if (bookExists == null)
+					return null;
+			}
+
+			await CountTotalAmount(order);
+
+			return await _orderRepository.UpdateAsync(id, order);
 		}
 
-		public bool Delete(Guid id)
+		public async Task<bool> Delete(Guid id)
 		{
-			var orderToDelete = Orders.FirstOrDefault(a => a.Id == id);
+			var orderToDelete = await _orderRepository.GetByIdAsync(id);
 			if (orderToDelete == null)
 				return false;
 
-			return Orders.Remove(orderToDelete);
+			return await _orderRepository.DeleteAsync(id);
+		}
+
+		public async Task CountTotalAmount(Order order)
+		{
+			foreach (var ob in order.OrderBooks)
+			{
+				var book = await _bookRepository.GetByIdAsync(ob.BookId);
+				ob.Book = book;
+			}
+
+			order.TotalAmount = order.OrderBooks.Sum(ob => ob.Quantity * (ob.Book?.Price ?? 0));
 		}
 	}
 }

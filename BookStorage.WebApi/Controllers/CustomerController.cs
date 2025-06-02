@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
 {
-	[Route("api/[controller]")]
+	[ApiVersion("1.0")]
 	[ApiController]
+	[Route("api/v{version:apiVersion}/[controller]")]
 	public class CustomerController : ControllerBase
 	{
 		private readonly IMapper _mapper;
@@ -25,9 +26,9 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the list of customers.</response>
 		[HttpGet]
 		[ProducesResponseType(typeof(IEnumerable<CustomerViewDto>), 200)]
-		public ActionResult<IEnumerable<CustomerViewDto>> GetAll()
+		public async Task<ActionResult<IEnumerable<CustomerViewDto>>> GetAll()
 		{
-			var customers = _customerService.GetAll();
+			var customers = await _customerService.GetAll();
 
 			var customerDto = _mapper.Map<List<CustomerViewDto>>(customers);
 
@@ -44,9 +45,9 @@ namespace BookStorage.WebApi.Controllers
 		[HttpGet("{id}")]
 		[ProducesResponseType(typeof(CustomerViewDto), 200)]
 		[ProducesResponseType(404)]
-		public ActionResult<CustomerViewDto> GetById([FromRoute] Guid id)
+		public async Task<ActionResult<CustomerViewDto>> GetById([FromRoute] Guid id)
 		{
-			var customer = _customerService.GetById(id);
+			var customer = await _customerService.GetById(id);
 			if (customer == null)
 				return NotFound();
 
@@ -64,8 +65,9 @@ namespace BookStorage.WebApi.Controllers
 		///     POST /api/Customer
 		///     {
 		///         "Email" : "v.@gmail.com",
-		///         "Name" : "Mark",
+		///         "firstName" : "Mark",
 		///         "PhoneNumber" : "+375291111111",
+		///			"purchaseDate": "2025-05-31T15:02:11.540Z"
 		///     }
 		/// </remarks>
 		/// <param name="customerDto">The customer to create</param>
@@ -75,14 +77,14 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPost]
 		[ProducesResponseType(typeof(CustomerViewDto), 201)]
 		[ProducesResponseType(400)]
-		public ActionResult<CustomerViewDto> Create([FromBody] CreateCustomerDto customerDto)
+		public async Task<ActionResult<CustomerViewDto>> Create([FromBody] CreateCustomerDto customerDto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
 			var customer = _mapper.Map<Customer>(customerDto);
 
-			var createdCustomer = _customerService.Create(customer);
+			var createdCustomer = await _customerService.Create(customer);
 			if (createdCustomer == null)
 				return BadRequest("Author with the same email already exists.");
 
@@ -102,11 +104,11 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPut("{id}")]
 		[ProducesResponseType(typeof(CustomerViewDto), 200)]
 		[ProducesResponseType(404)]
-		public ActionResult<CustomerViewDto> Update([FromRoute] Guid id, [FromBody] UpdateCustomerDto customerDto)
+		public async Task<ActionResult<CustomerViewDto>> Update([FromRoute] Guid id, [FromBody] UpdateCustomerDto customerDto)
 		{
 			var customerToUpdate = _mapper.Map<Customer>(customerDto);
 
-			var updatedCustomer = _customerService.Update(id, customerToUpdate);
+			var updatedCustomer = await _customerService.Update(id, customerToUpdate);
 			if (updatedCustomer == null)
 				return NotFound();
 
@@ -124,10 +126,10 @@ namespace BookStorage.WebApi.Controllers
 		[HttpDelete("{id}")]
 		[ProducesResponseType(204)]
 		[ProducesResponseType(404)]
-		public ActionResult Delete([FromRoute] Guid id)
+		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var customerToDelete = _customerService.Delete(id);
-			if (customerToDelete)
+			var customerToDelete = await _customerService.Delete(id);
+			if (!customerToDelete)
 				return NotFound();
 
 			return NoContent();
