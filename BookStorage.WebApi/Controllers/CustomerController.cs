@@ -1,7 +1,12 @@
 using AutoMapper;
-using BookStorage.Application.Interfaces.Services;
+using BookStorage.Application.Mediatr.CustomerMediatr.CreateCustomer;
+using BookStorage.Application.Mediatr.CustomerMediatr.DeleteCustomer;
+using BookStorage.Application.Mediatr.CustomerMediatr.GetAllCustomers;
+using BookStorage.Application.Mediatr.CustomerMediatr.GetByIdCustomer;
+using BookStorage.Application.Mediatr.CustomerMediatr.UpdateCustomer;
 using BookStorage.Domain.Models;
 using BookStorage.WebApi.DTOs.Customer;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -12,11 +17,11 @@ namespace BookStorage.WebApi.Controllers
 	public class CustomerController : ControllerBase
 	{
 		private readonly IMapper _mapper;
-		private readonly ICustomerService _customerService;
-		public CustomerController(IMapper mapper, ICustomerService customerService)
+		private readonly IMediator _mediator;
+		public CustomerController(IMapper mapper, IMediator mediator)
 		{
 			_mapper = mapper;
-			_customerService = customerService;
+			_mediator = mediator;
 		}
 
 		/// <summary>
@@ -28,7 +33,7 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(typeof(IEnumerable<CustomerViewDto>), 200)]
 		public async Task<ActionResult<IEnumerable<CustomerViewDto>>> GetAll()
 		{
-			var customers = await _customerService.GetAll();
+			var customers = await _mediator.Send(new GetAllCustomersQuery());
 
 			var customerDto = _mapper.Map<List<CustomerViewDto>>(customers);
 
@@ -47,7 +52,7 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(404)]
 		public async Task<ActionResult<CustomerViewDto>> GetById([FromRoute] Guid id)
 		{
-			var customer = await _customerService.GetById(id);
+			var customer = await _mediator.Send(new GetCustomerByIdQuery(id));
 			if (customer == null)
 				return NotFound();
 
@@ -84,7 +89,7 @@ namespace BookStorage.WebApi.Controllers
 
 			var customer = _mapper.Map<Customer>(customerDto);
 
-			var createdCustomer = await _customerService.Create(customer);
+			var createdCustomer = await _mediator.Send(new CreateCustomerCommand(customer));
 			if (createdCustomer == null)
 				return BadRequest("Author with the same email already exists.");
 
@@ -108,7 +113,7 @@ namespace BookStorage.WebApi.Controllers
 		{
 			var customerToUpdate = _mapper.Map<Customer>(customerDto);
 
-			var updatedCustomer = await _customerService.Update(id, customerToUpdate);
+			var updatedCustomer = await _mediator.Send(new UpdateCustomerCommand(id, customerToUpdate));
 			if (updatedCustomer == null)
 				return NotFound();
 
@@ -128,7 +133,7 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(404)]
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var customerToDelete = await _customerService.Delete(id);
+			var customerToDelete = await _mediator.Send(new DeleteCustomerCommand(id));
 			if (!customerToDelete)
 				return NotFound();
 

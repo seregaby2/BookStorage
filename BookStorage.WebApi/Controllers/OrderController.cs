@@ -1,5 +1,4 @@
 using AutoMapper;
-using BookStorage.Application.Interfaces.Services;
 using BookStorage.Application.Mediatr.OrderMediatr.CreateOrder;
 using BookStorage.Application.Mediatr.OrderMediatr.DeleteOrder;
 using BookStorage.Application.Mediatr.OrderMediatr.GetAllOrders;
@@ -19,11 +18,9 @@ namespace BookStorage.WebApi.Controllers
 	{
 		private readonly IMapper _mapper;
 		private readonly IMediator _mediator;
-		private readonly IOrderService _orderService;
-		public OrderController(IMapper mapper, IOrderService orderService, IMediator mediator)
+		public OrderController(IMapper mapper, IMediator mediator)
 		{
 			_mapper = mapper;
-			_orderService = orderService;
 			_mediator = mediator;
 		}
 
