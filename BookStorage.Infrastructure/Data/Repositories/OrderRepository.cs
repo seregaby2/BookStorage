@@ -7,10 +7,12 @@ namespace BookStorage.Infrastructure.Data.Repositories
 	public class OrderRepository : IOrderRepository
 	{
 		private readonly IDbConnectionFactory _dbFactory;
+		private readonly IOrderBookRepository _orderBookRepository;
 
-		public OrderRepository(IDbConnectionFactory dbFactory)
+		public OrderRepository(IDbConnectionFactory dbFactory, IOrderBookRepository orderBookRepository)
 		{
 			_dbFactory = dbFactory;
+			_orderBookRepository = orderBookRepository;
 		}
 
 		public async Task<IEnumerable<Order>> GetAllAsync()
@@ -128,20 +130,7 @@ namespace BookStorage.Infrastructure.Data.Repositories
 					order.CustomerId
 				}, transaction);
 
-				const string updateBooks = @"
-					INSERT INTO store.OrderBooks (OrderId, BookId, Quantity)
-					VALUES (@OrderId, @BookId, @Quantity);";
-
-				foreach (var ob in order.OrderBooks)
-				{
-					await connection.ExecuteAsync(updateBooks, new
-					{
-						OrderId = order.Id,
-						ob.BookId,
-						ob.Quantity
-					}, transaction);
-				}
-
+				await _orderBookRepository.InsertUpdateBook(order, connection, transaction);
 				transaction.Commit();
 
 				return order;
@@ -185,22 +174,15 @@ namespace BookStorage.Infrastructure.Data.Repositories
 					order.CustomerId
 				}, transaction);
 
-				await connection.ExecuteAsync("DELETE FROM store.OrderBooks WHERE OrderId = @OrderId", new { OrderId = id }, transaction);
-
-				var insertOrderBookSql = @"
-					INSERT INTO store.OrderBooks (OrderId, BookId, Quantity)
-					VALUES (@OrderId, @BookId, @Quantity)";
-
+				order.Id = id;
 				foreach (var ob in order.OrderBooks)
 				{
-					await connection.ExecuteAsync(insertOrderBookSql, new
-					{
-						OrderId = id,
-						BookId = ob.BookId,
-						Quantity = ob.Quantity
-					}, transaction);
+					ob.OrderId = id;
 				}
 
+				await _orderBookRepository.DeleteOrderBookItem(id, connection, transaction);
+
+				await _orderBookRepository.InsertUpdateBook(order, connection, transaction);
 				await transaction.CommitAsync();
 
 				order.Id = id;
@@ -227,7 +209,7 @@ namespace BookStorage.Infrastructure.Data.Repositories
 				if (existingOrder == null)
 					return false;
 
-				await connection.ExecuteAsync("DELETE FROM store.OrderBooks WHERE OrderId = @OrderId", new { OrderId = id }, transaction);
+				await _orderBookRepository.DeleteOrderBookItem(id, connection, transaction);
 
 				var affectedRows = await connection.ExecuteAsync("DELETE FROM store.Orders WHERE Id = @Id", new { Id = id }, transaction);
 

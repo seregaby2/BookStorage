@@ -13,6 +13,7 @@ namespace BookStorage.Infrastructure.Extensions
 			services.AddScoped<IBookRepository, BookRepository>();
 			services.AddScoped<ICustomerRepository, CustomerRepository>();
 			services.AddScoped<IOrderRepository, OrderRepository>();
+			services.AddScoped<IOrderBookRepository, OrderBookRepository>();
 			services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
 
 			return services;
