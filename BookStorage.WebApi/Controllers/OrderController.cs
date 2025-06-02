@@ -1,7 +1,13 @@
 using AutoMapper;
 using BookStorage.Application.Interfaces.Services;
+using BookStorage.Application.Mediatr.OrderMediatr.CreateOrder;
+using BookStorage.Application.Mediatr.OrderMediatr.DeleteOrder;
+using BookStorage.Application.Mediatr.OrderMediatr.GetAllOrders;
+using BookStorage.Application.Mediatr.OrderMediatr.GetByIdOrder;
+using BookStorage.Application.Mediatr.OrderMediatr.UpdateOrder;
 using BookStorage.Domain.Models;
 using BookStorage.WebApi.DTOs.Order;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -12,11 +18,13 @@ namespace BookStorage.WebApi.Controllers
 	public class OrderController : ControllerBase
 	{
 		private readonly IMapper _mapper;
+		private readonly IMediator _mediator;
 		private readonly IOrderService _orderService;
-		public OrderController(IMapper mapper, IOrderService orderService)
+		public OrderController(IMapper mapper, IOrderService orderService, IMediator mediator)
 		{
 			_mapper = mapper;
 			_orderService = orderService;
+			_mediator = mediator;
 		}
 
 		/// <summary>
@@ -28,7 +36,7 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(typeof(IEnumerable<OrderViewDto>), 200)]
 		public async Task<ActionResult<IEnumerable<OrderViewDto>>> GetAll()
 		{
-			var orders = await _orderService.GetAll();
+			var orders = await _mediator.Send(new GetAllOrdersQuery());
 
 			var ordersDto = _mapper.Map<List<OrderViewDto>>(orders);
 
@@ -47,7 +55,7 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(404)]
 		public async Task<ActionResult<OrderViewDto>> GetById([FromRoute] Guid id)
 		{
-			var order = await _orderService.GetById(id);
+			var order = await _mediator.Send(new GetOrderByIdQuery(id));
 			if (order == null)
 				return NotFound();
 
@@ -88,7 +96,7 @@ namespace BookStorage.WebApi.Controllers
 
 			var order = _mapper.Map<Order>(orderDto);
 
-			var createdOrder = await _orderService.Create(order);
+			var createdOrder = await _mediator.Send(new CreateOrderCommand(order));
 
 			if (createdOrder == null)
 				return BadRequest("CustomerId or BookId are not found");
@@ -113,7 +121,7 @@ namespace BookStorage.WebApi.Controllers
 		{
 			var orderToUpdate = _mapper.Map<Order>(orderDto);
 
-			var updatedOrder = await _orderService.Update(id, orderToUpdate);
+			var updatedOrder = await _mediator.Send(new UpdateOrderCommand(id, orderToUpdate));
 			if (updatedOrder is null)
 				return NotFound("Order or CustomerId or BookId are not found");
 
@@ -131,7 +139,7 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(404)]
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var orderToDelete = await _orderService.Delete(id);
+			var orderToDelete = await _mediator.Send(new DeleteOrderCommand(id));
 			if (!orderToDelete)
 				return NotFound();
 
@@ -140,3 +148,9 @@ namespace BookStorage.WebApi.Controllers
 	}
 }
 
+/*
+  I add mediatr in order Controller. Mediatr helps separate responsibility between layers.
+	Mediatr allow:
+ - Send commands and requests without knowing who processes them and how;
+ - Isolate business logic from controllers, UI and other parts.
+ */

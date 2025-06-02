@@ -1,6 +1,7 @@
 using BookStorage.Application.Implementations.Services;
 using BookStorage.Application.Interfaces.Services;
-
+using BookStorage.Application.Mediatr.OrderMediatr.CreateOrder;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BookStorage.Application.Extensions
@@ -13,6 +14,7 @@ namespace BookStorage.Application.Extensions
 			services.AddScoped<IBookService, BookService>();
 			services.AddScoped<ICustomerService, CustomerService>();
 			services.AddScoped<IOrderService, OrderService>();
+			services.AddMediatR(typeof(CreateOrderCommand).Assembly);
 
 			return services;
 		}
