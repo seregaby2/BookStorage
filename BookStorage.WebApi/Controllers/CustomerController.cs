@@ -53,12 +53,9 @@ namespace BookStorage.WebApi.Controllers
 		public async Task<ActionResult<CustomerViewDto>> GetById([FromRoute] Guid id)
 		{
 			var customer = await _mediator.Send(new GetCustomerByIdQuery(id));
-			if (customer == null)
-				return NotFound();
 
-			var customerDto = _mapper.Map<CustomerViewDto>(customer);
+			return customer is null ? NotFound() : Ok(_mapper.Map<CustomerViewDto>(customer));
 
-			return Ok(customerDto);
 		}
 
 		/// <summary>
@@ -90,12 +87,10 @@ namespace BookStorage.WebApi.Controllers
 			var customer = _mapper.Map<Customer>(customerDto);
 
 			var createdCustomer = await _mediator.Send(new CreateCustomerCommand(customer));
-			if (createdCustomer == null)
-				return BadRequest("Author with the same email already exists.");
 
-			var createdDto = _mapper.Map<CustomerViewDto>(createdCustomer);
-
-			return StatusCode(201, createdDto);
+			return createdCustomer is null
+				? BadRequest("Author with the same email already exists.")
+				: StatusCode(201, _mapper.Map<CustomerViewDto>(createdCustomer));
 		}
 
 		/// <summary>
@@ -114,12 +109,8 @@ namespace BookStorage.WebApi.Controllers
 			var customerToUpdate = _mapper.Map<Customer>(customerDto);
 
 			var updatedCustomer = await _mediator.Send(new UpdateCustomerCommand(id, customerToUpdate));
-			if (updatedCustomer == null)
-				return NotFound();
 
-			var customerViewDto = _mapper.Map<CustomerViewDto>(updatedCustomer);
-
-			return Ok(customerViewDto);
+			return updatedCustomer is null ? NotFound() : Ok(_mapper.Map<CustomerViewDto>(updatedCustomer));
 		}
 
 		/// <summary>
@@ -134,11 +125,15 @@ namespace BookStorage.WebApi.Controllers
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
 			var customerToDelete = await _mediator.Send(new DeleteCustomerCommand(id));
-			if (!customerToDelete)
-				return NotFound();
 
-			return NoContent();
+			return !customerToDelete ? NotFound() : NoContent();
 		}
 	}
 }
+
+/*
+ Used a modern C# Features:
+	- Replace constractiob IF
+	syntactic sugar (doing code more readable)
+ */
 

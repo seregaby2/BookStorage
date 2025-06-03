@@ -5,8 +5,8 @@ namespace BookStorage.WebApi.DTOs.Order
 {
 	public class UpdateOrderDto
 	{
-		public Guid? CustomerId { get; set; }
-		public OrderStatus? Status { get; set; }
-		public List<UpdateOrderBookDto>? Books { get; set; }
+		public Guid? CustomerId { get; init; }
+		public OrderStatus? Status { get; init; }
+		public List<UpdateOrderBookDto>? Books { get; init; }
 	}
 }
