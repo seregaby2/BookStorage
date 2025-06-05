@@ -1,7 +1,5 @@
-using BookStorage.Application.Mediatr.OrderMediatr.CreateOrder;
+using BookStorage.Application.Commands.Order.Create;
 using FluentValidation;
-
-
 
 namespace BookStorage.Application.Validators.Orders
 {
@@ -12,13 +10,13 @@ namespace BookStorage.Application.Validators.Orders
 			RuleFor(x => x.Order.CustomerId)
 				.NotEmpty().WithMessage("CustomerId is required.");
 
-			RuleFor(x => x.Order.OrderBooks)
+			RuleFor(x => x.Order.OrderBook)
 				.NotNull().WithMessage("OrderBooks list must be provided.")
 				.Must(books => books.Count > 0)
 				.WithMessage("At least one book must be included in the order.");
 
 			RuleFor(x => x.Order.Status)
-				.NotEmpty().WithMessage("\r\nThe status can take the following values: Pending, Paid, Shipped, Delivered, Canceled,");
+				.IsInEnum().WithMessage("\r\nThe status can take the following values: Pending, Paid, Shipped, Delivered, Canceled,");
 		}
 	}
 }

@@ -1,7 +1,9 @@
 using BookStorage.Application.Behaviors;
+using BookStorage.Application.Commands.Customer.Create;
 using BookStorage.Application.Implementations.Services;
 using BookStorage.Application.Interfaces.Services;
-using BookStorage.Application.Mediatr.OrderMediatr.CreateOrder;
+using BookStorage.Application.MappingProfiles;
+using BookStorage.Application.Mappings;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,9 +19,14 @@ namespace BookStorage.Application.Extensions
 			services.AddScoped<ICustomerService, CustomerService>();
 			services.AddScoped<IOrderService, OrderService>();
 
-			services.AddMediatR(typeof(CreateOrderCommand).Assembly);
+			services.AddMediatR(typeof(CreateCustomerCommand).Assembly);
 			services.AddValidatorsFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
 			services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+			services.AddAutoMapper(typeof(OrderProfile));
+			services.AddAutoMapper(typeof(CustomerProfile));
+			services.AddAutoMapper(typeof(BookProfile));
+			services.AddAutoMapper(typeof(AuthorProfile));
 
 			return services;
 		}

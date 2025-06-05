@@ -73,6 +73,7 @@ namespace BookStorage.Application.Implementations.Services
 			if (orderToDelete == null)
 				return false;
 
+
 			return await _orderRepository.DeleteAsync(id);
 		}
 

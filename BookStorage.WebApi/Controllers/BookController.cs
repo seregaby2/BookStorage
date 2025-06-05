@@ -1,7 +1,11 @@
 using AutoMapper;
+using BookStorage.Application.Commands.Book.Create;
+using BookStorage.Application.Commands.Book.Delete;
+using BookStorage.Application.Commands.Book.Update;
 using BookStorage.Application.Interfaces.Services;
-using BookStorage.Domain.Models;
-using BookStorage.WebApi.DTOs.Book;
+using BookStorage.Application.Queries.Book.GetAll;
+using BookStorage.Application.Queries.Book.GetById;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -12,11 +16,13 @@ namespace BookStorage.WebApi.Controllers
 	public class BookController : ControllerBase
 	{
 		private readonly IMapper _mapper;
+		private readonly IMediator _mediator;
 		private readonly IBookService _bookService;
 
-		public BookController(IMapper mapper, IBookService BookService)
+		public BookController(IMapper mapper, IMediator mediator, IBookService BookService)
 		{
 			_mapper = mapper;
+			_mediator = mediator;
 			_bookService = BookService;
 		}
 
@@ -26,12 +32,12 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>A list of books</returns>
 		/// <response code="200">Returns the list of books.</response>
 		[HttpGet]
-		[ProducesResponseType(typeof(IEnumerable<BookViewDto>), 200)]
-		public async Task<ActionResult<IEnumerable<BookViewDto>>> GetAll()
+		[ProducesResponseType(typeof(IEnumerable<GetAllBooksModel>), 200)]
+		public async Task<ActionResult<IEnumerable<GetAllBooksModel>>> GetAll()
 		{
-			var books = await _bookService.GetAll();
+			var books = await _mediator.Send(new GetAllBooksQuery());
 
-			var booksDto = _mapper.Map<List<BookViewDto>>(books);
+			var booksDto = _mapper.Map<List<GetAllBooksModel>>(books);
 
 			return Ok(booksDto);
 		}
@@ -44,17 +50,13 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the book</response>
 		/// <response code="404">If the book is not found</response>
 		[HttpGet("{id}")]
-		[ProducesResponseType(typeof(BookViewDto), 200)]
+		[ProducesResponseType(typeof(GetByIdBookModel), 200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<BookViewDto>> GetById([FromRoute] Guid id)
+		public async Task<ActionResult<GetByIdBookModel>> GetById([FromRoute] Guid id)
 		{
-			var book = await _bookService.GetById(id);
-			if (book == null)
-				return NotFound();
+			var book = await _mediator.Send(new GetBookByIdQuery(id));
 
-			var bookDto = _mapper.Map<BookViewDto>(book);
-
-			return Ok(bookDto);
+			return book is null ? NotFound() : Ok(_mapper.Map<GetByIdBookModel>(book));
 		}
 
 		/// <summary>
@@ -76,22 +78,19 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="201">Returns the newly created book</response>
 		/// <response code="400">If the input model is invalid</response>
 		[HttpPost]
-		[ProducesResponseType(typeof(BookViewDto), 201)]
+		[ProducesResponseType(typeof(CreateBookModel), 201)]
 		[ProducesResponseType(400)]
-		public async Task<ActionResult<BookViewDto>> CreateAsync([FromBody] CreateBookDto bookDto)
+		public async Task<ActionResult<CreateBookModel>> CreateAsync([FromBody] CreateBookCommand bookDto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
-			var book = _mapper.Map<Book>(bookDto);
 
-			var createdBook = await _bookService.Create(book);
-			if (createdBook == null)
-				return NotFound($"Author was not found.");
+			var createdBook = await _mediator.Send(new CreateBookCommand(bookDto.Book));
 
-			var createdDto = _mapper.Map<BookViewDto>(createdBook);
-
-			return StatusCode(201, createdDto);
+			return createdBook is null
+				? BadRequest("Author was not found.")
+				: StatusCode(201, _mapper.Map<CreateBookModel>(createdBook));
 		}
 
 		/// <summary>
@@ -103,19 +102,13 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the updated book</response>
 		/// <response code="404">If the book with the specified ID is not found</response>
 		[HttpPut("{id}")]
-		[ProducesResponseType(typeof(BookViewDto), 200)]
+		[ProducesResponseType(typeof(UpdateBookModel), 200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<BookViewDto>> UpdateAsync([FromRoute] Guid id, [FromBody] UpdateBookDto bookDto)
+		public async Task<ActionResult<UpdateBookModel>> UpdateAsync([FromRoute] Guid id, [FromBody] UpdateBookCommand bookDto)
 		{
-			var bookToUpdate = _mapper.Map<Book>(bookDto);
+			var updatedBook = await _mediator.Send(new UpdateBookCommand(id, bookDto.Book));
 
-			var updatedBook = await _bookService.Update(id, bookToUpdate);
-			if (updatedBook == null)
-				return BadRequest($"Author or book were not found.");
-
-			var bookViewDto = _mapper.Map<BookViewDto>(updatedBook);
-
-			return Ok(bookViewDto);
+			return updatedBook is null ? BadRequest($"Author or book were not found.") : Ok(_mapper.Map<UpdateBookModel>(updatedBook));
 		}
 
 		/// <summary>
@@ -129,11 +122,10 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(404)]
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var bookToDelete = await _bookService.Delete(id);
-			if (!bookToDelete)
-				return NotFound();
 
-			return NoContent();
+			var bookToDelete = await _mediator.Send(new DeleteBookCommand(id));
+
+			return !bookToDelete ? NotFound() : NoContent();
 		}
 	}
 }
