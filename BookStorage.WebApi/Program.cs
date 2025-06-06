@@ -78,6 +78,29 @@ if (app.Environment.IsDevelopment())
 	});
 }
 
+app.Use(async (context, next) =>
+{
+	try
+	{
+		await next();
+	}
+	catch (FluentValidation.ValidationException ex)
+	{
+		context.Response.StatusCode = StatusCodes.Status400BadRequest;
+		context.Response.ContentType = "application/json";
+
+		var errors = ex.Errors
+			.GroupBy(e => e.PropertyName)
+			.ToDictionary(
+				g => g.Key,
+				g => g.Select(e => e.ErrorMessage).ToArray()
+			);
+
+		var result = System.Text.Json.JsonSerializer.Serialize(new { errors });
+		await context.Response.WriteAsync(result);
+	}
+});
+
 app.UseHttpsRedirection();
 
 app.UseRateLimiter();

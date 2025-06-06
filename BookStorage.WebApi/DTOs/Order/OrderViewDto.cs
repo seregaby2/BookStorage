@@ -6,12 +6,12 @@ namespace BookStorage.WebApi.DTOs.Order
 {
 	public class OrderViewDto
 	{
-		public Guid Id { get; set; }
-		public decimal TotalAmount { get; set; }
-		public DateTime OrderDate { get; set; }
-		public Guid CustomerId { get; set; }
-		public OrderStatus Status { get; set; }
-		public required CustomerViewDto Customer { get; set; }
-		public required List<OrderBookViewDto> Books { get; set; }
+		public Guid Id { get; init; }
+		public decimal TotalAmount { get; init; }
+		public DateTime OrderDate { get; init; }
+		public Guid CustomerId { get; init; }
+		public OrderStatus Status { get; init; }
+		public required CustomerViewDto Customer { get; init; }
+		public required List<OrderBookViewDto> Books { get; init; }
 	}
 }

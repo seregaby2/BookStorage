@@ -1,7 +1,10 @@
 using AutoMapper;
-using BookStorage.Application.Interfaces.Services;
-using BookStorage.Domain.Models;
-using BookStorage.WebApi.DTOs.Customer;
+using BookStorage.Application.Commands.Customer.Create;
+using BookStorage.Application.Commands.Customer.Delete;
+using BookStorage.Application.Commands.Customer.Update;
+using BookStorage.Application.Queries.Customer.GetAll;
+using BookStorage.Application.Queries.Customer.GetById;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -12,11 +15,11 @@ namespace BookStorage.WebApi.Controllers
 	public class CustomerController : ControllerBase
 	{
 		private readonly IMapper _mapper;
-		private readonly ICustomerService _customerService;
-		public CustomerController(IMapper mapper, ICustomerService customerService)
+		private readonly IMediator _mediator;
+		public CustomerController(IMapper mapper, IMediator mediator)
 		{
 			_mapper = mapper;
-			_customerService = customerService;
+			_mediator = mediator;
 		}
 
 		/// <summary>
@@ -25,12 +28,12 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>A list of customers</returns>
 		/// <response code="200">Returns the list of customers.</response>
 		[HttpGet]
-		[ProducesResponseType(typeof(IEnumerable<CustomerViewDto>), 200)]
-		public async Task<ActionResult<IEnumerable<CustomerViewDto>>> GetAll()
+		[ProducesResponseType(typeof(IEnumerable<GetAllCustomerModel>), 200)]
+		public async Task<ActionResult<IEnumerable<GetAllCustomerModel>>> GetAll()
 		{
-			var customers = await _customerService.GetAll();
+			var customers = await _mediator.Send(new GetAllCustomersQuery());
 
-			var customerDto = _mapper.Map<List<CustomerViewDto>>(customers);
+			var customerDto = _mapper.Map<List<GetAllCustomerModel>>(customers);
 
 			return Ok(customerDto);
 		}
@@ -43,17 +46,14 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the customer</response>
 		/// <response code="404">If the customer is not found</response>
 		[HttpGet("{id}")]
-		[ProducesResponseType(typeof(CustomerViewDto), 200)]
+		[ProducesResponseType(typeof(GetByIdCustomerModel), 200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<CustomerViewDto>> GetById([FromRoute] Guid id)
+		public async Task<ActionResult<GetByIdCustomerModel>> GetById([FromRoute] Guid id)
 		{
-			var customer = await _customerService.GetById(id);
-			if (customer == null)
-				return NotFound();
+			var customer = await _mediator.Send(new GetCustomerByIdQuery(id));
 
-			var customerDto = _mapper.Map<CustomerViewDto>(customer);
+			return customer is null ? NotFound() : Ok(_mapper.Map<GetByIdCustomerModel>(customer));
 
-			return Ok(customerDto);
 		}
 
 		/// <summary>
@@ -75,22 +75,18 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="201">Returns the newly created customer</response>
 		/// <response code="400">If the input model is invalid</response>
 		[HttpPost]
-		[ProducesResponseType(typeof(CustomerViewDto), 201)]
+		[ProducesResponseType(typeof(CreateCustomerModel), 201)]
 		[ProducesResponseType(400)]
-		public async Task<ActionResult<CustomerViewDto>> Create([FromBody] CreateCustomerDto customerDto)
+		public async Task<ActionResult<CreateCustomerModel>> Create([FromBody] CreateCustomerCommand customerDto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
-			var customer = _mapper.Map<Customer>(customerDto);
+			var createdCustomer = await _mediator.Send(new CreateCustomerCommand(customerDto.Customer));
 
-			var createdCustomer = await _customerService.Create(customer);
-			if (createdCustomer == null)
-				return BadRequest("Author with the same email already exists.");
-
-			var createdDto = _mapper.Map<CustomerViewDto>(createdCustomer);
-
-			return StatusCode(201, createdDto);
+			return createdCustomer is null
+				? BadRequest("Customer with the same email already exists.")
+				: StatusCode(201, _mapper.Map<CreateCustomerModel>(createdCustomer));
 		}
 
 		/// <summary>
@@ -102,19 +98,13 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the updated customer</response>
 		/// <response code="404">If the customer with the specified ID is not found</response>
 		[HttpPut("{id}")]
-		[ProducesResponseType(typeof(CustomerViewDto), 200)]
+		[ProducesResponseType(typeof(UpdateCustomerModel), 200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<CustomerViewDto>> Update([FromRoute] Guid id, [FromBody] UpdateCustomerDto customerDto)
+		public async Task<ActionResult<UpdateCustomerModel>> Update([FromRoute] Guid id, [FromBody] UpdateCustomerCommand customerDto)
 		{
-			var customerToUpdate = _mapper.Map<Customer>(customerDto);
+			var updatedCustomer = await _mediator.Send(new UpdateCustomerCommand(id, customerDto.Customer));
 
-			var updatedCustomer = await _customerService.Update(id, customerToUpdate);
-			if (updatedCustomer == null)
-				return NotFound();
-
-			var customerViewDto = _mapper.Map<CustomerViewDto>(updatedCustomer);
-
-			return Ok(customerViewDto);
+			return updatedCustomer is null ? NotFound() : Ok(_mapper.Map<UpdateCustomerModel>(updatedCustomer));
 		}
 
 		/// <summary>
@@ -128,12 +118,16 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(404)]
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var customerToDelete = await _customerService.Delete(id);
-			if (!customerToDelete)
-				return NotFound();
+			var customerToDelete = await _mediator.Send(new DeleteCustomerCommand(id));
 
-			return NoContent();
+			return !customerToDelete ? NotFound() : NoContent();
 		}
 	}
 }
+
+/*
+ Used a modern C# Features:
+	- Replace constractiob IF
+	syntactic sugar (doing code more readable)
+ */
 

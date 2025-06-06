@@ -24,6 +24,8 @@ BookStorage — Online Bookstore
 - ASP.NET Core Web API  
 - Dapper  
 - AutoMapper  
+- MediatR
+- FluentValidation
 - MS SQL LocalDB  
 - Clean Architecture / N-Layer / SOLID Principles  
 

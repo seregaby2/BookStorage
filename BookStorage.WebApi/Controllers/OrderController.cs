@@ -1,7 +1,10 @@
 using AutoMapper;
-using BookStorage.Application.Interfaces.Services;
-using BookStorage.Domain.Models;
-using BookStorage.WebApi.DTOs.Order;
+using BookStorage.Application.Commands.Order.Create;
+using BookStorage.Application.Commands.Order.Delete;
+using BookStorage.Application.Commands.Order.Update;
+using BookStorage.Application.Queries.Order.GetAll;
+using BookStorage.Application.Queries.Order.GetById;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -12,11 +15,11 @@ namespace BookStorage.WebApi.Controllers
 	public class OrderController : ControllerBase
 	{
 		private readonly IMapper _mapper;
-		private readonly IOrderService _orderService;
-		public OrderController(IMapper mapper, IOrderService orderService)
+		private readonly IMediator _mediator;
+		public OrderController(IMapper mapper, IMediator mediator)
 		{
 			_mapper = mapper;
-			_orderService = orderService;
+			_mediator = mediator;
 		}
 
 		/// <summary>
@@ -25,12 +28,12 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>A list of orders</returns>
 		/// <response code="200">Returns the list of orders.</response>
 		[HttpGet]
-		[ProducesResponseType(typeof(IEnumerable<OrderViewDto>), 200)]
-		public async Task<ActionResult<IEnumerable<OrderViewDto>>> GetAll()
+		[ProducesResponseType(typeof(IEnumerable<GetAllOrderModel>), 200)]
+		public async Task<ActionResult<IEnumerable<GetAllOrderModel>>> GetAll()
 		{
-			var orders = await _orderService.GetAll();
+			var orders = await _mediator.Send(new GetAllOrdersQuery());
 
-			var ordersDto = _mapper.Map<List<OrderViewDto>>(orders);
+			var ordersDto = _mapper.Map<List<GetAllOrderModel>>(orders);
 
 			return Ok(ordersDto);
 		}
@@ -43,15 +46,15 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the order</response>
 		/// <response code="404">If the author is not found</response>
 		[HttpGet("{id}")]
-		[ProducesResponseType(typeof(OrderViewDto), 200)]
+		[ProducesResponseType(typeof(GetByIdOrderModel), 200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<OrderViewDto>> GetById([FromRoute] Guid id)
+		public async Task<ActionResult<GetByIdOrderModel>> GetById([FromRoute] Guid id)
 		{
-			var order = await _orderService.GetById(id);
+			var order = await _mediator.Send(new GetOrderByIdQuery(id));
 			if (order == null)
 				return NotFound();
 
-			var orderDto = _mapper.Map<OrderViewDto>(order);
+			var orderDto = _mapper.Map<GetByIdOrderModel>(order);
 
 			return Ok(orderDto);
 		}
@@ -79,21 +82,21 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="201">Returns the newly created order</response>
 		/// <response code="400">If the input model is invalid</response>
 		[HttpPost]
-		[ProducesResponseType(typeof(OrderViewDto), 201)]
+		[ProducesResponseType(typeof(CreateOrderModel), 201)]
 		[ProducesResponseType(400)]
-		public async Task<ActionResult<OrderViewDto>> Create([FromBody] CreateOrderDto orderDto)
+		public async Task<ActionResult<CreateOrderModel>> Create([FromBody] CreateOrderCommand orderDto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
-			var order = _mapper.Map<Order>(orderDto);
+			//var order = _mapper.Map<CreateOrderModel>(orderDto);
 
-			var createdOrder = await _orderService.Create(order);
+			var createdOrder = await _mediator.Send(new CreateOrderCommand(orderDto.Order));
 
 			if (createdOrder == null)
 				return BadRequest("CustomerId or BookId are not found");
 
-			var createdDto = _mapper.Map<OrderViewDto>(createdOrder);
+			var createdDto = _mapper.Map<CreateOrderModel>(createdOrder);
 
 			return StatusCode(201, createdDto);
 		}
@@ -109,11 +112,11 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPut("{id}")]
 		[ProducesResponseType(200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<Order>> Update([FromRoute] Guid id, [FromBody] UpdateOrderDto orderDto)
+		public async Task<ActionResult<UpdateOrderModel>> Update([FromRoute] Guid id, [FromBody] UpdateOrderCommand orderDto)
 		{
-			var orderToUpdate = _mapper.Map<Order>(orderDto);
+			//var orderToUpdate = _mapper.Map<UpdateOrderModel>(orderDto);
 
-			var updatedOrder = await _orderService.Update(id, orderToUpdate);
+			var updatedOrder = await _mediator.Send(new UpdateOrderCommand(id, orderDto.Order));
 			if (updatedOrder is null)
 				return NotFound("Order or CustomerId or BookId are not found");
 
@@ -131,7 +134,7 @@ namespace BookStorage.WebApi.Controllers
 		[ProducesResponseType(404)]
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var orderToDelete = await _orderService.Delete(id);
+			var orderToDelete = await _mediator.Send(new DeleteOrderCommand(id));
 			if (!orderToDelete)
 				return NotFound();
 
@@ -140,3 +143,9 @@ namespace BookStorage.WebApi.Controllers
 	}
 }
 
+/*
+  I add mediatr in order Controller. Mediatr helps separate responsibility between layers.
+	Mediatr allow:
+ - Send commands and requests without knowing who processes them and how;
+ - Isolate business logic from controllers, UI and other parts.
+ */
