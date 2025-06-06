@@ -2,6 +2,7 @@ using AutoMapper;
 using BookStorage.Application.Interfaces.Services;
 using BookStorage.Domain.Models;
 using BookStorage.WebApi.DTOs.Author;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -74,7 +75,8 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The newly created author</returns>
 		/// <response code="201">Returns the newly created author</response>
 		/// <response code="400">If the input model is invalid</response>
-		[HttpPost]
+		[Authorize(Roles = "Admin")]
+		[HttpPost("admin")]
 		[ProducesResponseType(typeof(AuthorViewDto), 201)]
 		[ProducesResponseType(400)]
 		public async Task<ActionResult<AuthorViewDto>> Create([FromBody] CreateAuthorDto authorDto)
