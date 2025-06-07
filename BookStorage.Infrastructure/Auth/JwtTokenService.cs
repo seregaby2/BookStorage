@@ -12,11 +12,14 @@ namespace BookStorage.Infrastructure.Auth
 	{
 		private readonly string _key;
 		private readonly string _issuer;
+		private readonly double _tokenLifetimeMinutes;
 
 		public JwtTokenService(IConfiguration config)
 		{
 			_key = config["Jwt:Key"]!;
 			_issuer = config["Jwt:Issuer"]!;
+			_tokenLifetimeMinutes = double.Parse(config["Jwt:TokenLifetimeMinutes"]!);
+
 		}
 
 		public string GenerateToken(User user)
@@ -35,7 +38,7 @@ namespace BookStorage.Infrastructure.Auth
 				issuer: _issuer,
 				audience: _issuer,
 				claims: claims,
-				expires: DateTime.UtcNow.AddHours(2),
+				expires: DateTime.UtcNow.AddMinutes(_tokenLifetimeMinutes),
 				signingCredentials: creds);
 
 			return new JwtSecurityTokenHandler().WriteToken(token);

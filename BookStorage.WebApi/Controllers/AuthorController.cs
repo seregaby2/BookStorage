@@ -1,7 +1,10 @@
 using AutoMapper;
-using BookStorage.Application.Interfaces.Services;
-using BookStorage.Domain.Models;
-using BookStorage.WebApi.DTOs.Author;
+using BookStorage.Application.Commands.Author.Create;
+using BookStorage.Application.Commands.Author.Delete;
+using BookStorage.Application.Commands.Author.Update;
+using BookStorage.Application.Queries.Author.GetAll;
+using BookStorage.Application.Queries.Author.GetById;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,13 +15,13 @@ namespace BookStorage.WebApi.Controllers
 	[Route("api/v{version:apiVersion}/[controller]")]
 	public class AuthorController : ControllerBase
 	{
-		private readonly IAuthorService _authorService;
 		private readonly IMapper _mapper;
+		private readonly IMediator _mediator;
 
-		public AuthorController(IAuthorService authorService, IMapper mapper)
+		public AuthorController(IMapper mapper, IMediator mediator)
 		{
-			_authorService = authorService;
 			_mapper = mapper;
+			_mediator = mediator;
 		}
 
 		/// <summary>
@@ -27,12 +30,12 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>A list of authors</returns>
 		/// <response code="200">Returns the list of authors.</response>
 		[HttpGet]
-		[ProducesResponseType(typeof(IEnumerable<AuthorViewDto>), 200)]
-		public async Task<ActionResult<IEnumerable<AuthorViewDto>>> GetAll()
+		[ProducesResponseType(typeof(IEnumerable<GetAllAuthorModel>), 200)]
+		public async Task<ActionResult<IEnumerable<GetAllAuthorModel>>> GetAll()
 		{
-			var authors = await _authorService.GetAll();
+			var authors = await _mediator.Send(new GetAllAuthorQuery());
 
-			var authorsDto = _mapper.Map<List<AuthorViewDto>>(authors);
+			var authorsDto = _mapper.Map<List<GetAllAuthorModel>>(authors);
 
 			return Ok(authorsDto);
 		}
@@ -45,17 +48,13 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="200">Returns the author</response>
 		/// <response code="404">If the author is not found</response>
 		[HttpGet("{id}")]
-		[ProducesResponseType(typeof(AuthorViewDto), 200)]
+		[ProducesResponseType(typeof(GetByIdAuthorModel), 200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<AuthorViewDto>> GetById([FromRoute] Guid id)
+		public async Task<ActionResult<GetByIdAuthorModel>> GetById([FromRoute] Guid id)
 		{
-			var author = await _authorService.GetById(id);
-			if (author == null)
-				return NotFound();
+			var author = await _mediator.Send(new GetAuthorByIdQuery(id));
 
-			var authorDto = _mapper.Map<AuthorViewDto>(author);
-
-			return Ok(authorDto);
+			return author is null ? NotFound() : Ok(_mapper.Map<GetByIdAuthorModel>(author));
 		}
 
 		/// <summary>
@@ -76,23 +75,19 @@ namespace BookStorage.WebApi.Controllers
 		/// <response code="201">Returns the newly created author</response>
 		/// <response code="400">If the input model is invalid</response>
 		[Authorize(Roles = "Admin")]
-		[HttpPost("admin")]
-		[ProducesResponseType(typeof(AuthorViewDto), 201)]
+		[HttpPost]
+		[ProducesResponseType(typeof(CreateAuthorModel), 201)]
 		[ProducesResponseType(400)]
-		public async Task<ActionResult<AuthorViewDto>> Create([FromBody] CreateAuthorDto authorDto)
+		public async Task<ActionResult<CreateAuthorModel>> Create([FromBody] CreateAuthorCommand authorDto)
 		{
 			if (!ModelState.IsValid)
 				return BadRequest(ModelState);
 
-			var author = _mapper.Map<Author>(authorDto);
+			var createdAuthor = await _mediator.Send(new CreateAuthorCommand(authorDto.Author));
 
-			var createdAuthor = await _authorService.Create(author);
-			if (createdAuthor == null)
-				return BadRequest("Author with the same name already exists.");
-
-			var createdDto = _mapper.Map<AuthorViewDto>(createdAuthor);
-
-			return StatusCode(201, createdDto);
+			return createdAuthor is null
+				? BadRequest("Author with the same name already exists.")
+				: StatusCode(201, _mapper.Map<CreateAuthorModel>(createdAuthor));
 		}
 
 		/// <summary>
@@ -103,20 +98,15 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The updated author</returns>
 		/// <response code="200">Returns the updated author</response>
 		/// <response code="404">If the author with the specified ID is not found</response>
+		[Authorize(Roles = "Admin")]
 		[HttpPut("{id}")]
-		[ProducesResponseType(typeof(AuthorViewDto), 200)]
+		[ProducesResponseType(typeof(UpdateAuthorModel), 200)]
 		[ProducesResponseType(404)]
-		public async Task<ActionResult<AuthorViewDto>> Update([FromRoute] Guid id, [FromBody] UpdateAuthorDto authorDto)
+		public async Task<ActionResult<UpdateAuthorModel>> Update([FromRoute] Guid id, [FromBody] UpdateAuthorCommand authorDto)
 		{
-			var authorToUpdate = _mapper.Map<Author>(authorDto);
+			var updatedAuthor = await _mediator.Send(new UpdateAuthorCommand(id, authorDto.Author));
 
-			var updatedAuthor = await _authorService.Update(id, authorToUpdate);
-			if (updatedAuthor == null)
-				return NotFound();
-
-			var authorViewDto = _mapper.Map<AuthorViewDto>(updatedAuthor);
-
-			return Ok(authorViewDto);
+			return updatedAuthor is null ? NotFound($"Author was not found.") : Ok(_mapper.Map<UpdateAuthorModel>(updatedAuthor));
 		}
 
 		/// <summary>
@@ -125,16 +115,15 @@ namespace BookStorage.WebApi.Controllers
 		/// <param name="id">The unique identifier of the author to delete</param>
 		/// <response code="204">Author was successfully deleted</response>
 		/// <response code="404">Author with the specified ID was not found</response>
+		[Authorize(Roles = "Admin")]
 		[HttpDelete("{id}")]
 		[ProducesResponseType(204)]
 		[ProducesResponseType(404)]
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-			var isAuthorAndBooksDelete = await _authorService.Delete(id);
-			if (!isAuthorAndBooksDelete)
-				return NotFound();
+			var authorToDelete = await _mediator.Send(new DeleteAuthorCommand(id));
 
-			return NoContent();
+			return !authorToDelete ? NotFound() : NoContent();
 		}
 	}
 }

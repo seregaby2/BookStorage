@@ -5,6 +5,7 @@ using BookStorage.Application.Commands.Customer.Update;
 using BookStorage.Application.Queries.Customer.GetAll;
 using BookStorage.Application.Queries.Customer.GetById;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -27,6 +28,7 @@ namespace BookStorage.WebApi.Controllers
 		/// </summary>
 		/// <returns>A list of customers</returns>
 		/// <response code="200">Returns the list of customers.</response>
+		[Authorize(Roles = "Admin")]
 		[HttpGet]
 		[ProducesResponseType(typeof(IEnumerable<GetAllCustomerModel>), 200)]
 		public async Task<ActionResult<IEnumerable<GetAllCustomerModel>>> GetAll()
@@ -45,6 +47,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The customer with the specified ID</returns>
 		/// <response code="200">Returns the customer</response>
 		/// <response code="404">If the customer is not found</response>
+		[Authorize(Roles = "Admin")]
 		[HttpGet("{id}")]
 		[ProducesResponseType(typeof(GetByIdCustomerModel), 200)]
 		[ProducesResponseType(404)]
@@ -74,6 +77,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The newly created customer</returns>
 		/// <response code="201">Returns the newly created customer</response>
 		/// <response code="400">If the input model is invalid</response>
+		[Authorize(Roles = "Admin")]
 		[HttpPost]
 		[ProducesResponseType(typeof(CreateCustomerModel), 201)]
 		[ProducesResponseType(400)]
@@ -97,6 +101,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The updated customer</returns>
 		/// <response code="200">Returns the updated customer</response>
 		/// <response code="404">If the customer with the specified ID is not found</response>
+		[Authorize(Roles = "Admin")]
 		[HttpPut("{id}")]
 		[ProducesResponseType(typeof(UpdateCustomerModel), 200)]
 		[ProducesResponseType(404)]
@@ -113,6 +118,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <param name="id">The unique identifier of the customer to delete</param>
 		/// <response code="204">Customer was successfully deleted</response>
 		/// <response code="404">Customer with the specified ID was not found</response>
+		[Authorize(Roles = "Admin")]
 		[HttpDelete("{id}")]
 		[ProducesResponseType(204)]
 		[ProducesResponseType(404)]

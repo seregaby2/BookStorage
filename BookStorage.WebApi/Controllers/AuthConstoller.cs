@@ -1,3 +1,4 @@
+using BookStorage.Application.Interfaces.Services;
 using BookStorage.Domain.Models;
 using BookStorage.Infrastructure.Interfaces;
 using BookStorage.WebApi.DTOs.Auth;
@@ -10,35 +11,35 @@ namespace BookStorage.WebApi.Controllers
 	[Route("api/v1/[controller]")]
 	public class AuthController : ControllerBase
 	{
-		private readonly IUserRepository _userRepository;
 		private readonly IJwtTokenService _jwt;
 		private readonly IPasswordHasher<User> _passwordHasher;
+		private readonly IUserService _userService;
 
-		public AuthController(IUserRepository userRepository, IJwtTokenService jwt, IPasswordHasher<User> passwordHasher)
+		public AuthController(IJwtTokenService jwt, IPasswordHasher<User> passwordHasher, IUserService userSerive)
 		{
-			_userRepository = userRepository;
 			_jwt = jwt;
 			_passwordHasher = passwordHasher;
+			_userService = userSerive;
 		}
 
 		[HttpPost("register")]
 		public async Task<ActionResult> Register([FromBody] RegisterDto registerDto)
 		{
-			var existing = await _userRepository.GetByEmailAsync(registerDto.Email);
+			var existing = await _userService.GetByEmailAsync(registerDto.Email);
 			if (existing != null)
 				return BadRequest("User already exists.");
 
 			var user = new User { Id = Guid.NewGuid(), Email = registerDto.Email, Role = registerDto.Role };
 			user.PasswordHash = _passwordHasher.HashPassword(user, registerDto.Password);
 
-			await _userRepository.CreateAsync(user);
+			await _userService.CreateAsync(user);
 			return Ok("User registered");
 		}
 
 		[HttpPost("login")]
 		public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
 		{
-			var user = await _userRepository.GetByEmailAsync(loginDto.Email);
+			var user = await _userService.GetByEmailAsync(loginDto.Email);
 			if (user == null)
 				return Unauthorized("Invalid credentials");
 
