@@ -16,11 +16,20 @@ IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Store')
     EXEC('CREATE SCHEMA Store');
 GO
 
-DROP TABLE IF EXISTS Store.OrderBooks
+DROP TABLE IF EXISTS Store.Users;
+DROP TABLE IF EXISTS Store.OrderBooks;
 DROP TABLE IF EXISTS Store.Books;
 DROP TABLE IF EXISTS Store.Orders;
 DROP TABLE IF EXISTS Store.Customers;
 DROP TABLE IF EXISTS Store.Authors;
+GO
+
+CREATE TABLE Store.Users (
+    Id UNIQUEIDENTIFIER PRIMARY KEY,
+    Email NVARCHAR(256) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(512) NOT NULL,
+    Role NVARCHAR(50) NOT NULL DEFAULT 'User'
+);
 GO
 
 CREATE TABLE Store.Authors (
@@ -57,7 +66,7 @@ CREATE TABLE Store.Books (
     Price DECIMAL(18, 2) NOT NULL,
     PublishDate DATETIME2 NOT NULL,
     AuthorId UNIQUEIDENTIFIER NOT NULL,
-    CONSTRAINT FK_Books_Authors FOREIGN KEY (AuthorId) REFERENCES Store.Authors(Id),
+    CONSTRAINT FK_Books_Authors FOREIGN KEY (AuthorId) REFERENCES Store.Authors(Id)
 );
 GO
 

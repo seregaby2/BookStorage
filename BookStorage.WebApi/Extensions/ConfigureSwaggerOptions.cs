@@ -23,5 +23,30 @@ public class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
 				Description = description.IsDeprecated ? "This API version has been deprecated." : null
 			});
 		}
+
+		options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+		{
+			Name = "Authorization",
+			Type = SecuritySchemeType.ApiKey,
+			Scheme = "Bearer",
+			BearerFormat = "JWT",
+			In = ParameterLocation.Header,
+			Description = "Enter the JWT token with prefix Bearer. Example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+		});
+
+		options.AddSecurityRequirement(new OpenApiSecurityRequirement
+		{
+			{
+				new OpenApiSecurityScheme
+				{
+					Reference = new OpenApiReference
+					{
+						Type = ReferenceType.SecurityScheme,
+						Id = "Bearer"
+					}
+				},
+				new string[] {}
+			}
+		});
 	}
 }

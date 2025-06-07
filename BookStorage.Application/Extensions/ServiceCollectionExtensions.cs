@@ -14,10 +14,8 @@ namespace BookStorage.Application.Extensions
 	{
 		public static IServiceCollection AddApplicationServices(this IServiceCollection services)
 		{
-			services.AddScoped<IAuthorService, AuthorService>();
-			services.AddScoped<IBookService, BookService>();
-			services.AddScoped<ICustomerService, CustomerService>();
 			services.AddScoped<IOrderService, OrderService>();
+			services.AddScoped<IUserService, UserService>();
 
 			services.AddMediatR(typeof(CreateCustomerCommand).Assembly);
 			services.AddValidatorsFromAssembly(typeof(ServiceCollectionExtensions).Assembly);

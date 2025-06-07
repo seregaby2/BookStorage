@@ -5,6 +5,7 @@ using BookStorage.Application.Commands.Order.Update;
 using BookStorage.Application.Queries.Order.GetAll;
 using BookStorage.Application.Queries.Order.GetById;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -27,6 +28,7 @@ namespace BookStorage.WebApi.Controllers
 		/// </summary>
 		/// <returns>A list of orders</returns>
 		/// <response code="200">Returns the list of orders.</response>
+		[Authorize]
 		[HttpGet]
 		[ProducesResponseType(typeof(IEnumerable<GetAllOrderModel>), 200)]
 		public async Task<ActionResult<IEnumerable<GetAllOrderModel>>> GetAll()
@@ -45,6 +47,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The order with the specified ID</returns>
 		/// <response code="200">Returns the order</response>
 		/// <response code="404">If the author is not found</response>
+		[Authorize]
 		[HttpGet("{id}")]
 		[ProducesResponseType(typeof(GetByIdOrderModel), 200)]
 		[ProducesResponseType(404)]
@@ -81,6 +84,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The newly created order</returns>
 		/// <response code="201">Returns the newly created order</response>
 		/// <response code="400">If the input model is invalid</response>
+		[Authorize]
 		[HttpPost]
 		[ProducesResponseType(typeof(CreateOrderModel), 201)]
 		[ProducesResponseType(400)]
@@ -109,6 +113,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The updated order</returns>
 		/// <response code="200">Returns the updated order</response>
 		/// <response code="404">If the order with the specified ID is not found</response>
+		[Authorize]
 		[HttpPut("{id}")]
 		[ProducesResponseType(200)]
 		[ProducesResponseType(404)]
@@ -129,6 +134,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <param name="id">The unique identifier of the order to delete</param>
 		/// <response code="204">Order was successfully deleted</response>
 		/// <response code="404">Order with the specified ID was not found</response>
+		[Authorize]
 		[HttpDelete("{id}")]
 		[ProducesResponseType(204)]
 		[ProducesResponseType(404)]

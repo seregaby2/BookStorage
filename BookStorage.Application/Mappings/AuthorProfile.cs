@@ -2,6 +2,7 @@ using AutoMapper;
 using BookStorage.Application.Commands.Author.Create;
 using BookStorage.Application.Commands.Author.Update;
 using BookStorage.Application.Queries.Author.GetAll;
+using BookStorage.Application.Queries.Author.GetById;
 using BookStorage.Domain.Models;
 
 namespace BookStorage.Application.Mappings
@@ -18,7 +19,7 @@ namespace BookStorage.Application.Mappings
 
 			CreateMap<Author, GetAllAuthorModel>();
 
-			CreateMap<Author, GetAllAuthorModel>();
+			CreateMap<Author, GetByIdAuthorModel>();
 		}
 	}
 }

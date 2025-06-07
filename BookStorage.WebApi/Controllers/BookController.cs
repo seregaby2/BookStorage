@@ -2,10 +2,10 @@ using AutoMapper;
 using BookStorage.Application.Commands.Book.Create;
 using BookStorage.Application.Commands.Book.Delete;
 using BookStorage.Application.Commands.Book.Update;
-using BookStorage.Application.Interfaces.Services;
 using BookStorage.Application.Queries.Book.GetAll;
 using BookStorage.Application.Queries.Book.GetById;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookStorage.WebApi.Controllers
@@ -17,13 +17,11 @@ namespace BookStorage.WebApi.Controllers
 	{
 		private readonly IMapper _mapper;
 		private readonly IMediator _mediator;
-		private readonly IBookService _bookService;
 
-		public BookController(IMapper mapper, IMediator mediator, IBookService BookService)
+		public BookController(IMapper mapper, IMediator mediator)
 		{
 			_mapper = mapper;
 			_mediator = mediator;
-			_bookService = BookService;
 		}
 
 		/// <summary>
@@ -77,6 +75,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The newly created book</returns>
 		/// <response code="201">Returns the newly created book</response>
 		/// <response code="400">If the input model is invalid</response>
+		[Authorize(Roles = "Admin")]
 		[HttpPost]
 		[ProducesResponseType(typeof(CreateBookModel), 201)]
 		[ProducesResponseType(400)]
@@ -101,6 +100,7 @@ namespace BookStorage.WebApi.Controllers
 		/// <returns>The updated book</returns>
 		/// <response code="200">Returns the updated book</response>
 		/// <response code="404">If the book with the specified ID is not found</response>
+		[Authorize(Roles = "Admin")]
 		[HttpPut("{id}")]
 		[ProducesResponseType(typeof(UpdateBookModel), 200)]
 		[ProducesResponseType(404)]
@@ -117,12 +117,12 @@ namespace BookStorage.WebApi.Controllers
 		/// <param name="id">The unique identifier of the book to delete</param>
 		/// <response code="204">Book was successfully deleted</response>
 		/// <response code="404">Book with the specified ID was not found</response>
+		[Authorize(Roles = "Admin")]
 		[HttpDelete("{id}")]
 		[ProducesResponseType(204)]
 		[ProducesResponseType(404)]
 		public async Task<ActionResult> Delete([FromRoute] Guid id)
 		{
-
 			var bookToDelete = await _mediator.Send(new DeleteBookCommand(id));
 
 			return !bookToDelete ? NotFound() : NoContent();

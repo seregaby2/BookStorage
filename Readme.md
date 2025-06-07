@@ -48,7 +48,7 @@ BookStorage.sln
 4. `"ConnectionStrings": {
   "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=BookStorage;Trusted_Connection=True;TrustServerCertificate=True;"
 };`
-5. Make sure the database exists and tables are created (example my scheme.sql `BookStorage.Infrastructure/Db/CreateSchemeVersion3.sql`);
+5. Make sure the database exists and tables are created (example my scheme.sql `BookStorage.Infrastructure/Db/CreateSchemeFINAL.sql`);
 6. Run the application via IIS Express (F5)
 7. Open Swagger UI in browser at https://localhost:44370/swagger
 

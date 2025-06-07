@@ -1,5 +1,6 @@
 using BookStorage.Application.Extensions;
 using BookStorage.Infrastructure.Extensions;
+using BookStorage.WebApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using System.Text.Json.Serialization;
@@ -12,6 +13,8 @@ builder.Services.AddControllers()
 	{
 		options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 	});
+
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
 builder.Services.AddApplicationServices();
 builder.Services.AddApplicationRepository();
