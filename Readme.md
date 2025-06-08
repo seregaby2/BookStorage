@@ -37,6 +37,16 @@ BookStorage.sln
  - BookStorage.Application # `Interfaces, business logic, services`
  - BookStorage.Infrastructure # `Dapper repositories and DB interaction`
  - BookStorage.Domain # `Entities and enums`
+ - BookStorage.Test # `Architectute test and other tests`
+	
+---
+
+## Additional task
+ - Apply coding conventions on solution. Force them using static code static code analysis.
+ - Add versioning to your API. All significant changes to your API will trigger new version creation.
+ - Add rate limiting to protect your API from DOS & DDOS and attacks 
+ - Create architecture tests, to ensure that dependencies within application are done correctly
+ - Create a ValidationBehavior pipeline for MediatR.
 
 ---
 
@@ -48,7 +58,7 @@ BookStorage.sln
 4. `"ConnectionStrings": {
   "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=BookStorage;Trusted_Connection=True;TrustServerCertificate=True;"
 };`
-5. Make sure the database exists and tables are created (example my scheme.sql `BookStorage.Infrastructure/Db/CreateSchemeFINAL.sql`);
+5. Create DataBase with my scheme (path `BookStorage.Infrastructure/Db/CreateSchemeFINAL.sql`);
 6. Run the application via IIS Express (F5)
 7. Open Swagger UI in browser at https://localhost:44370/swagger
 

@@ -21,7 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Readme.md = Readme.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookStorage.ArchitectureTests", "BookStorage.ArchitectureTests\BookStorage.ArchitectureTests.csproj", "{1D1F3655-CAE0-4282-B933-B20E10CC412B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookStorage.Tests", "BookStorage.ArchitectureTests\BookStorage.Tests.csproj", "{1D1F3655-CAE0-4282-B933-B20E10CC412B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
