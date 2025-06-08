@@ -14,12 +14,14 @@ namespace BookStorage.WebApi.Controllers
 		private readonly IJwtTokenService _jwt;
 		private readonly IPasswordHasher<User> _passwordHasher;
 		private readonly IUserService _userService;
+		private readonly ILogger<AuthController> _logger;
 
-		public AuthController(IJwtTokenService jwt, IPasswordHasher<User> passwordHasher, IUserService userSerive)
+		public AuthController(IJwtTokenService jwt, IPasswordHasher<User> passwordHasher, IUserService userSerive, ILogger<AuthController> logger)
 		{
 			_jwt = jwt;
 			_passwordHasher = passwordHasher;
 			_userService = userSerive;
+			_logger = logger;
 		}
 
 		[HttpPost("register")]
@@ -39,15 +41,29 @@ namespace BookStorage.WebApi.Controllers
 		[HttpPost("login")]
 		public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
 		{
+			_logger.LogInformation("User attempting login with email: {Email}", loginDto.Email);
+
 			var user = await _userService.GetByEmailAsync(loginDto.Email);
 			if (user == null)
+			{
+				_logger.LogWarning("Login failed for {Email}", loginDto.Email);
+
 				return Unauthorized("Invalid credentials");
+			}
+
 
 			var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, loginDto.Password);
 			if (result == PasswordVerificationResult.Failed)
+			{
+				_logger.LogWarning("Login failed for {Email}", loginDto.Email);
+
 				return Unauthorized("Invalid credentials");
+			}
 
 			var token = _jwt.GenerateToken(user);
+
+			_logger.LogInformation("User logged in successfully: {Email}", loginDto.Email);
+
 			return Ok(new JwtTokenResponse { Token = token });
 		}
 	}
