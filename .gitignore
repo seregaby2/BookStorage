@@ -1,1 +1,61 @@
+# Build results
+bin/
+obj/
+out/
+
+# Rider project files
+.idea/
+
+# VS settings
 .vs/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Auto-generated files
+*.Generated.*
+Generated/
+
+# ASP.NET
+wwwroot/
+appsettings.*.json
+
+# Logs
+*.log
+logs/
+
+# Entity Framework Migrations binary
+Migrations/obj/
+
+# Packages
+*.nupkg
+packages/
+.nuget/
+
+# Secrets (if using secrets manager)
+secrets.json
+
+# Test results
+TestResults/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# JetBrains Rider caches
+.idea/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# dotCover
+*.dotCover
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
